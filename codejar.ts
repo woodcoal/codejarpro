@@ -67,10 +67,16 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   const doHighlight = (editor: HTMLElement, pos?: Position) => {
     highlight(editor, pos)
   }
-
-  let isLegacy = false // true if plaintext-only is not supported
-  if (editor.contentEditable !== 'plaintext-only') isLegacy = true
-  if (isLegacy) editor.setAttribute('contenteditable', 'true')
+  
+  const matchFirefoxVersion =
+		window.navigator.userAgent.match(/Firefox\/([0-9]+)\./);
+	const firefoxVersion = matchFirefoxVersion
+		? parseInt(matchFirefoxVersion[1])
+		: 0;
+	let isLegacy = false; // true if plaintext-only is not supported
+	if (editor.contentEditable !== "plaintext-only" || firefoxVersion >= 136)
+		isLegacy = true;
+	if (isLegacy) editor.setAttribute("contenteditable", "true");
 
   const debounceHighlight = debounce(() => {
     const pos = save()
