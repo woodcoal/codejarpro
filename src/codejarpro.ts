@@ -84,6 +84,9 @@ export default function CodeJarPro(
 	// 定义一个 onUpdate 回调函数，当代码更新时会被调用
 	let onUpdate: (code: string) => void | undefined = () => void 0;
 
+	// 定义一个 onAction 回调函数，以便操作变化时调用，返回 true 表示将中止系统内部其他操作。此操作早于插件操作
+	let onAction: (name: ActionName, code: string, event?: Event) => void | boolean = () => void 0;
+
 	// `prev` 用于在按键事件发生前，保存编辑器的文本内容，方便判断内容是否有变化
 	let prev: string;
 
@@ -215,9 +218,12 @@ export default function CodeJarPro(
 	 * @returns 如果任何一个钩子返回 true，则返回 true
 	 */
 	function hookPlugin(hookName: ActionName, event?: Event): boolean {
-		if (plugins.size < 1) return false;
+		// 系统操作先执行
+		let result = !!onAction(hookName, toString(), event);
+		if (result === true) return true;
 
-		let result = false;
+		// 如果返回非 true 操作，则继续后续插件操作
+		if (plugins.size < 1) return false;
 
 		plugins.forEach((plugin, name) => {
 			debug(`"${name}" plugin execute "${hookName}" action`);
@@ -863,6 +869,11 @@ export default function CodeJarPro(
 				callback(code);
 				hookPlugin('afterUpdate');
 			}, delayUpdate);
+		},
+
+		/** 注册一个操作时的回调函数 */
+		onAction(callback: (name: ActionName, code: string, event?: Event) => void | boolean) {
+			isFn(callback) && (onAction = callback);
 		},
 
 		/** 编辑器实例 */

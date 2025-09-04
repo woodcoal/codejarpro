@@ -157,7 +157,7 @@ export function InsertMark(cjp: CodeJarPro) {
 	const plugins = new Map<string, IPlugin>();
 
 	/** 返回指定操作 */
-	if (plugins.has(id)) return plugins.get(id);
+	if (plugins.has(id)) return plugins.get(id)!;
 
 	/** 创建操作 */
 	const plugin = creteaPlugin(cjp);
