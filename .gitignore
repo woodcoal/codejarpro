@@ -2,3 +2,8 @@
 package-lock.json
 *.js
 *.d.ts
+pnpm-lock.yaml
+run.cmd
+reset.cmd
+dist
+.vscode

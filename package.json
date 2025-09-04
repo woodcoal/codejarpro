@@ -1,49 +1,43 @@
 {
-  "name": "codejar",
-  "description": "An embeddable code editor for the browser",
-  "version": "4.2.0",
-  "type": "module",
-  "main": "./dist/codejar.js",
-  "types": "./dist/codejar.d.ts",
-  "exports": {
-    ".": "./dist/codejar.js",
-    "./cursor": "./dist/cursor.js"
-  },
-  "typesVersions": {
-    "*": {
-      ".": [
-        "./dist/codejar.d.ts"
-      ],
-      "cursor": [
-        "./dist/cursor.d.ts"
-      ]
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "start": "tsc -w",
-    "build": "tsc",
-    "size": "minify ./dist/codejar.js --sourceType module | gzip-size",
-    "release": "release-it"
-  },
-  "devDependencies": {
-    "babel-minify": "^0.5.2",
-    "gzip-size-cli": "^5.1.0",
-    "release-it": "^16.1.3",
-    "typescript": "^5.1.6"
-  },
-  "release-it": {
-    "github": {
-      "release": true
-    },
-    "hooks": {
-      "after:bump": "npm run build"
-    }
-  },
-  "license": "MIT",
-  "repository": "antonmedv/codejar",
-  "author": "Anton Medvedev <anton@medv.io>",
-  "homepage": "https://medv.io/codejar/"
+	"name": "codejarpro",
+	"description": "A powerful, extensible code editor for the browser. Based on CodeJar with plugins, line numbers and more.",
+	"version": "1.25.904",
+	"license": "MIT",
+	"repository": "https://github.com/woodcoal/codejarpro",
+	"author": "木炭 <i@wodocoal.cn>; Anton Medvedev <anton@medv.io>",
+	"homepage": "https://github.com/woodcoal/codejarpro",
+	"private": false,
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs",
+			"types": "./dist/index.d.ts"
+		},
+		"./plugins": {
+			"import": "./dist/plugins/index.js",
+			"require": "./dist/plugins/index.cjs",
+			"types": "./dist/plugins/index.d.ts"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"README_CN.md"
+	],
+	"scripts": {
+		"dev": "tsup --watch",
+		"chk": "tsc --noEmit",
+		"build": "tsc --noEmit && tsup",
+		"release": "release-it",
+		"release:patch": "release-it patch"
+	},
+	"devDependencies": {
+		"@release-it/conventional-changelog": "^10.0.1",
+		"release-it": "^19.0.4",
+		"tsup": "^8.5.0",
+		"typescript": "^5.9.2"
+	}
 }

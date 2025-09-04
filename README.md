@@ -1,144 +1,227 @@
-<p align="center"><a href="https://medv.io/codejar/"><img src="https://medv.io/assets/codejar.svg" width="72"></a></p>
-<h3 align="center">CodeJar – an embeddable code editor for the browser</h3>
-<p align="center"><a href="https://medv.io/codejar/"><img src="https://medv.io/assets/codejar/screenshot.png" width="709"></a></p>
+![CodeJarPro Screenshot](https://github.com/woodcoal/codejarpro/blob/master/codejarpro.png)
 
-[![npm](https://img.shields.io/npm/v/codejar?color=brightgreen)](https://www.npmjs.com/package/codejar)
-[![npm bundle size](https://img.shields.io/bundlephobia/minzip/codejar?label=size)](https://bundlephobia.com/result?p=codejar)
+# CodeJarPro 🍯✨
 
-## Features
+[English](README.md) | [中文](README_CN.md)
 
-* Lightweight (**2.45 kB** only)
-* No dependencies
-* Preserves indentation on a new line
-* Adds closing brackets, quotes
-* Indents line with the **Tab** key
-* Supports **undo**/**redo** 
+**A lightweight, modular, and extensible code editor for the modern web.**
 
-## Getting Started
+`CodeJarPro` is an open-source project deeply refactored and functionally enhanced by [WOODCOAL (木炭)](https://github.com/woodcoal), based on the popular [antonmedv/codejar](https://github.com/antonmedv/codejar). It not only fully inherits the lightweight and efficient nature of `codejar` (only a few KB after gzip), but also introduces a powerful **modular plugin system**, with built-in core plugins like **line numbers** and **code marking**, allowing the compact editor to have professional capabilities and extensibility comparable to an IDE.
 
-Install CodeJar 🍯 &nbsp; via npm:
+[![NPM Version](https://img.shields.io/npm/v/codejarpro.svg)](https://www.npmjs.com/package/codejarpro) [![NPM Bundle Size](https://img.shields.io/bundlephobia/minzip/codejarpro)](https://bundlephobia.com/result?p=codejarpro) [![License](https://img.shields.io/npm/l/codejarpro)](https://github.com/woodcoal/codejarpro/blob/master/LICENSE)
+
+## ✨ Core Features
+
+-   **Powerful Plugin System**: Easily mount or unmount features for an editor instance via the `addPlugin` API, achieving complete separation between the core and extensions.
+-   **Built-in Core Plugins**: Provides the most commonly used developer plugins, **`LineNumbers`** and **`InsertMark`**, out of the box with no extra configuration needed.
+-   **Modern Build**: Packaged using `tsup`, providing ESM, CJS, and IIFE (browser) formats for each module (main library and plugins), perfectly adapting to any modern or traditional front-end project.
+-   **Professional Development Experience**: Full TypeScript support with precise type definitions.
+-   **Extremely Lightweight**: Inherits the core advantages of `codejar`, maintaining a minimal size and zero dependencies.
+
+## 🚀 Installation
 
 ```bash
-npm i codejar
+npm install codejarpro
 ```
 
-Create an element and init the CodeJar 🍯:
+## Quick Start
+
+### 1\. In the Browser
+
+This is the simplest way, suitable for static web pages or quick demos.
 
 ```html
 <div class="editor"></div>
+
+<script src="https://unpkg.com/codejarpro/dist/codejarpro.min.js"></script>
+<script src="https://unpkg.com/codejarpro/dist/plugins/lineNumbers.min.js"></script>
+
 <script>
-  let jar = CodeJar(document.querySelector('.editor'), highlight)
+	const editor = document.querySelector('.editor');
+
+	// Code highlighting function, you can use libraries like Prism.js
+	const highlight = (editor) => {
+		/* Your highlighting logic... */
+	};
+
+	const cjp = CJP.CodeJarPro(editor, highlight, { tab: '\t' });
+
+	// Register and enable the line numbers plugin
+	cjp.addPlugin('lineNumbers', CJP.Plugin.LineNumbers, { show: true });
+
+	cjp.updateCode(`function sayHello() {\n  console.log('Hello, CodeJarPro!');\n}`);
 </script>
 ```
 
-Second argument to `CodeJar` is a highlighting function (like Prism.js, highlight.js):
+### 2\. In Modern Front-end Projects (e.g., Vite, Webpack)
 
-```ts
-const highlight = (editor: HTMLElement) => {
-  const code = editor.textContent
-  code = code.replace('foo', '<span style="color: red">foo</span>')
-  editor.innerHTML = code
+```javascript
+import { CodeJarPro } from 'codejarpro';
+import { LineNumbers } from 'codejarpro/plugins';
+
+const editor = document.querySelector('#editor');
+const highlight = (editor) => {
+	/* Your highlighting logic... */
+};
+
+const cjp = CodeJarPro(editor, highlight, { tab: '\t' });
+
+// Register and enable the line numbers plugin
+cjp.addPlugin('lineNumbers', LineNumbers, { show: true });
+
+cjp.updateCode(`function sayHello() {\n  console.log('Hello, CodeJarPro!');\n}`);
+```
+
+---
+
+## Core API Details
+
+### Initializing `CodeJarPro(editor, highlight?, options?)`
+
+This is the entry function to create an editor instance.
+
+-   **`editor: HTMLElement`**: Required. The DOM element to be used as the editor.
+-   **`highlight?: (editor: HTMLElement) => void`**: Optional. A function for syntax highlighting. When the editor content is updated, this function will be called with the editor element as an argument. You can process `editor.innerHTML` inside this function to implement syntax highlighting.
+-   **`options?: Partial<Options>`**: Optional. A configuration object to customize the editor's behavior.
+
+#### Configuration Options (Options)
+
+-   `tab: string` (default: `'\t'`): The string to insert when the Tab key is pressed.
+-   `indentOn: RegExp` (default: `/[({\[]$/`): A regular expression that triggers auto-indentation upon matching.
+-   `moveToNewLine: RegExp` (default: `/^[)}\]]/`): A regular expression that moves to a new line upon matching.
+-   `spellcheck: boolean` (default: `false`): Whether to enable spell checking.
+-   `catchTab: boolean` (default: `true`): Whether to capture the Tab key event.
+-   `preserveIdent: boolean` (default: `true`): Whether to preserve indentation on new lines.
+-   `addClosing: boolean` (default: `true`): Whether to automatically close brackets and quotes.
+-   `history: boolean` (default: `true`): Whether to enable undo/redo history.
+-   `autoclose: object`: Detailed configuration for the autoclosing feature.
+-   `debounce: object`: Debounce configuration, in milliseconds.
+    -   `highlight: number` (default: `300`): Debounce delay for the highlight function.
+    -   `update: number` (default: `300`): Debounce delay for the `onUpdate` callback.
+-   `disableDebug: boolean` (default: `true`): Whether to enable debugging. When enabled, it will print runtime logs to the console.
+
+---
+
+### `cjp` Instance Properties and Methods
+
+The `CodeJarPro(...)` function returns an editor instance (which we'll call `cjp`), allowing you to fully control the editor.
+
+#### Core Methods
+
+-   **`cjp.updateCode(code: string, callOnUpdate?: boolean)`**: Programmatically updates the editor's code. `callOnUpdate` (default `true`) controls whether to trigger the `onUpdate` callback.
+-   **`cjp.onUpdate((code: string) => void)`**: Registers a callback function that is triggered when the editor's code changes (with debouncing).
+-   **`cjp.toString(): string`**: Gets the plain text content of the editor.
+-   **`cjp.destroy()`**: Completely destroys the editor instance, removing all event listeners, plugins, and automatically created DOM elements to prevent memory leaks.
+
+#### Cursor & History
+
+-   **`cjp.save(): Position`**: Saves the current cursor position and selection information, returning a `Position` object.
+-   **`cjp.restore(pos: Position)`**: Restores the cursor position and selection based on a previously saved `Position` object.
+-   **`cjp.recordHistory()`**: Manually adds a snapshot to the history.
+
+#### Plugin Management
+
+-   **`cjp.addPlugin(name, plugin, config?)`**: Registers a plugin. Returns the plugin instance, through which you can call the plugin's specific APIs.
+-   **`cjp.removePlugin(name)`**: Safely uninstalls a plugin by its name.
+-   **`cjp.updatePluginConfig(name, config)`**: Updates the configuration of a registered plugin.
+-   **`cjp.destroyPlugins()`**: Destroys and removes all registered plugins.
+
+#### Read-only Properties
+
+-   **`cjp.editor: HTMLElement`**: A reference to the original DOM element serving as the editor.
+-   **`cjp.id: string`**: The unique ID of the editor instance.
+-   **`cjp.options: Options`**: The currently effective configuration object.
+-   **`cjp.plugins: Map<string, IPlugin>`**: A Map object containing all registered plugin instances.
+
+---
+
+## 🔌 Plugin System
+
+All extended functionalities of `CodeJarPro` are implemented through plugins.
+
+### Using Built-in Plugins
+
+`CodeJarPro` provides a series of core plugins out of the box.
+**\>\> [Click here to view the detailed documentation for built-in plugins](src/plugins/README.md) \<\<**
+
+### Plugin Development
+
+You can easily create your own plugins to extend the editor's functionality. A plugin is essentially a function that returns an object conforming to a specific interface.
+
+#### Basic Structure of a Plugin
+
+```typescript
+import { CodeJarPro, IPlugin, ActionName } from 'codejarpro';
+
+// Your plugin function
+export function MyAwesomePlugin(cjp: CodeJarPro, config?: MyPluginOptions) {
+	// Plugin initialization logic...
+	console.log('MyAwesomePlugin is initialized with config:', config);
+
+	// Must return an object that conforms to the IPlugin interface
+	return {
+		// Core: onAction is the entry point for all editor events
+		onAction: (params) => {
+			const { name, code, event } = params;
+
+			if (name === 'keyup') {
+				console.log('User typed! New code length:', code.length);
+			}
+
+			if (name === 'keydown' && (event as KeyboardEvent).key === 'F1') {
+				alert('F1 pressed!');
+				return true; // Returning true can prevent the default behavior
+			}
+		},
+
+		// Optional: Allows external updates to the plugin's configuration
+		updateConfig: (newConfig: MyPluginOptions) => {
+			console.log('Config updated:', newConfig);
+			// ... Update the plugin's internal state
+		},
+
+		// Optional: Cleanup function, called when the plugin is removed
+		destroy: () => {
+			console.log('MyAwesomePlugin is destroyed!');
+			// ... Remove event listeners, clean up DOM, etc., here
+		},
+
+		// You can also expose custom APIs
+		myCustomMethod: () => {
+			alert('Hello from MyAwesomePlugin!');
+		}
+	} as IPlugin<MyPluginOptions>;
 }
-
-const jar = CodeJar(editor, highlight)
 ```
 
-Third argument to `CodeJar` is options:
-  - `tab: string` replaces "tabs" with given string. Default: `\t`.
-    - Note: use css rule `tab-size` to customize size.
-  - `indentOn: RegExp` allows auto indent rule to be customized. Default `/[({\[]$/`.
-  - `moveToNewLine: RegExp` checks in extra newline character need to be added. Default `/^[)}\]]/`.
-  - `spellcheck: boolean` enables spellchecking on the editor. Default `false`.
-  - `catchTab: boolean` catches Tab keypress events and replaces it with `tab` string. Default: `true`.
-  - `preserveIdent: boolean` keeps indent levels on new line. Default `true`.
-  - `addClosing: boolean` automatically adds closing brackets, quotes. Default `true`.
-  - `history` records history. Default `true`.
-  - `window` window object. Default: `window`.
-  - `autoclose` object
-    - `open string` characters that triggers the autoclose function 
-    - `close string` characters that correspond to the opening ones and close the object.
+#### The `onAction` Hook
 
+This is the **only** channel through which plugins interact with the editor. The editor calls the `onAction` method of all registered plugins at various key points in its lifecycle.
 
-```js
-const options = {
-  tab: ' '.repeat(4), // default is '\t'
-  indentOn: /[(\[]$/, // default is /{$/
-  autoclose: { 
-    open: `([{*`, // default is `([{'"`
-    close: `)]}*` // default is `)]}'"`
-  }
-}
+The `params` argument of `onAction` includes:
 
-const jar = CodeJar(editor, highlight, options)
-```
+-   `name: ActionName`: The name of the currently triggered event.
+-   `code: string`: The current plain text content of the editor.
+-   `event?: Event`: The original DOM event object (if any).
 
-## API
+Available `ActionName`s include:
 
-#### `updateCode(string)`
+-   `beforeUpdate`
+-   `afterUpdate`
+-   `keydown`
+-   `keyup`
+-   `focus`
+-   `blur`
+-   `paste`
+-   `cut`
+-   `scroll`
+-   `resize`
+-   `highlight`
 
-Updates the code.
+## Acknowledgements
 
-```js
-jar.updateCode(`let foo = bar`)
-```
-
-#### `updateOptions(Partial<Options>)`
-
-Updates the options.
-
-```js
-jar.updateOptions({tab: '\t'})
-```
-
-
-#### `onUpdate((code: string) => void)`
-
-Calls callback on code updates.
-
-```js
-jar.onUpdate(code => {
-  console.log(code)
-})
-```
-
-#### `toString(): string`
-
-Return current code.
-
-```js
-let code = jar.toString()
-```
-
-#### `save(): string`
-
-Saves current cursor position.
-
-```js
-let pos = jar.save()
-```
-
-#### `restore(pos: Position)`
-
-Restore cursor position.
-
-```js
-jar.restore(pos)
-```
-
-#### `recordHistory()`
-
-Saves current editor state to history.
-
-#### `destroy()`
-
-Removes event listeners from editor.
-
-## Related
-
-* [react-codejar](https://github.com/guilhermelimak/react-codejar) - a React wrapper for CodeJar. 
-* [ngx-codejar](https://github.com/julianpoemp/ngx-codejar) - an Angular wrapper for CodeJar. 
-* [codejar-linenumbers](https://github.com/julianpoemp/codejar-linenumbers) - an JS library for line numbers.
+The creation of `CodeJarPro` would not have been possible without the excellent foundation provided by [antonmedv/codejar](https://github.com/antonmedv/codejar). Special thanks to the original author, **Anton Medvedev**, for his outstanding work and selfless contribution.
 
 ## License
 
-[MIT](LICENSE)
+This project is licensed under the **MIT** License. Copyright is jointly held by **WOODCOAL (木炭)** and **Anton Medvedev**. See the `LICENSE` file for details.

@@ -1,65 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>CodeJar 🍯</title>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+	<head>
+		<meta charset="UTF-8" />
+		<title>CodeJarPro 🍯</title>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css"
+			rel="stylesheet"
+		/>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
 
-    body {
-      min-height: 100vh;
-      background: #F6F8F8;
-    }
+			body {
+				min-height: 100vh;
+				background: #f6f8f8;
+			}
 
-    main {
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 20px;
-    }
+			main {
+				max-width: 800px;
+				margin: 40px auto;
+				padding: 20px;
+				line-height: 250%;
+			}
 
-    .editor {
-      background: #fff;
-      border-radius: 6px;
-      box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
-      font-family: "Source Code Pro", monospace;
-      font-size: 14px;
-      font-weight: 400;
-      min-height: 240px;
-      letter-spacing: normal;
-      line-height: 20px;
-      padding: 10px;
-      tab-size: 4;
-    }
-  </style>
-</head>
-<body>
-<main>
-  <div class="editor" data-manual data-gramm="false"></div>
-</main>
-<script type="module">
-  import {CodeJar} from './dist/codejar.js'
-  const editor = document.querySelector('.editor')
+			.codejarpro-container {
+				border-radius: 6px;
+				box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+					0 1px 5px 0 rgba(0, 0, 0, 0.12),
+					0 3px 1px -2px rgba(0, 0, 0, 0.2);
+				max-height: 480px;
+				overflow-y: auto;
+			}
 
-  const highlight = editor => {
-    editor.innerHTML = Prism.highlight(editor.textContent, Prism.languages.javascript, 'javascript')
-  }
+			.editor {
+				background: #fff;
+				font-family: "Source Code Pro", monospace;
+				font-size: 14px;
+				font-weight: 400;
+				min-height: 240px;
+				height: 100%;
+				letter-spacing: normal;
+				line-height: 25px;
+				padding: 10px;
+				tab-size: 4;
+				position: relative;
+				overflow: hidden;
+			}
+			.message {
+				color: red;
+			}
 
-  const jar = CodeJar(editor, highlight, {
-    tab: '  ',
-  })
-
-  jar.updateCode(localStorage.getItem('code'))
-  jar.onUpdate(code => {
-    localStorage.setItem('code', code)
-  })
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-</body>
+			.error-marker {
+				--icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="m12 16l4-4l-4-4l-1.4 1.4l1.6 1.6H8v2h4.2l-1.6 1.6zm0 6q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22"/></svg>');
+				-webkit-mask: var(--icon) no-repeat;
+				mask: var(--icon) no-repeat;
+				-webkit-mask-size: 100% 100%;
+				mask-size: 100% 100%;
+				background-color: currentColor;
+				color: inherit;
+				width: 14px;
+				height: 14px;
+				padding: 0.2em;
+				color: red;
+				display: inline-block;
+				position: relative;
+				margin: 0 3px -3px 8px;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>CodeJarPro 🍯</h1>
+			<p>
+				一个基于 CodeJar 的代码编辑器插件库，
+				<a href="https://github.com/woodcoal/codejarpro" target="_blank"
+					>查看项目</a
+				>
+			</p>
+			<p style="font-weight: 600">
+				当前语言：
+				<i>JSON</i>
+			</p>
+			<p>演示支持行号，语法高亮，JSON 校验</p>
+			<div class="editor" data-manual data-gramm="false"></div>
+			<div class="message"></div>
+		</main>
+		<script src="dist/iife/codejarpro.js"></script>
+		<script src="dist/iife/plugins/insertMark.js"></script>
+		<script src="dist/iife/plugins/lineNumbers.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+		<script src="./demo.js" type="module"></script>
+	</body>
 </html>
