@@ -87,8 +87,8 @@ Copyright © 木炭 (WOODCOAL) All rights reserved
 import { ref } from 'vue';
 import { Code } from './src';
 
-import { JsonValidate } from '../../src/plugins';
-import type { CodeJarProInstance } from '../../src';
+import type { CodeJarProInstance } from 'codejarpro';
+import { JsonValidate } from 'codejarpro/plugins';
 
 const xCode = ref<typeof Code>();
 
@@ -100,7 +100,7 @@ const data = {
 	phone: '13800000000'
 };
 
-let json = ref(JSON.stringify(data, null, '\t'));
+const json = ref(JSON.stringify(data, null, '\t'));
 
 const onInit = (_: string, CJP: CodeJarProInstance) => {
 	CJP.addPlugin(JsonValidate, {

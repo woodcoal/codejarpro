@@ -10,21 +10,9 @@ Provides a powerful and adaptive line number display feature for the editor. It 
 
 ### Registration and Configuration
 
-You can register and configure the line numbers plugin using the `cjp.addPlugin` method.
-
-```javascript
-// Register and enable line numbers
-const lineNumbers = cjp.addPlugin('lineNumbers', CJP.Plugin.LineNumbers, {
-	show: true
-});
-```
-
-In an ESM environment:
-
-```javascript
+javascript
 import { LineNumbers } from 'codejarpro/plugins';
-const lineNumbers = cjp.addPlugin('lineNumbers', LineNumbers, { show: true });
-```
+const lineNumbers = cjp.addPlugin(LineNumbers, { show: true });
 
 #### Configuration Options
 
@@ -34,7 +22,7 @@ const lineNumbers = cjp.addPlugin('lineNumbers', LineNumbers, { show: true });
 
 ### API
 
-The line numbers plugin typically works automatically in the background, but you can also dynamically update its configuration through the plugin instance.
+The plugin instance `lineNumbers` exposes the following methods:
 
 -   **`lineNumbers.updateConfig(config)`**
 
@@ -45,18 +33,11 @@ The line numbers plugin typically works automatically in the background, but you
     ```javascript
     // Hide line numbers
     lineNumbers.updateConfig({ show: false });
-
-    // Show line numbers again
-    lineNumbers.updateConfig({ show: true });
     ```
-
--   **`lineNumbers.destroy()`**
-
-    Destroys the plugin instance, cleans up resources, and removes all related DOM elements.
 
 ---
 
-## 2. Marker Plugin (`InsertMark`)
+## 2\. Insert Mark Plugin (`InsertMark`)
 
 Allows you to insert a visual marker at any row and column in the code, which is ideal for displaying syntax errors, warnings, or other informational messages.
 
@@ -65,12 +46,8 @@ Allows you to insert a visual marker at any row and column in the code, which is
 This plugin does not require initial configuration.
 
 ```javascript
-// Browser environment
-const insertMark = cjp.addPlugin('insertMark', CJP.Plugin.InsertMark);
-
-// ESM environment
 import { InsertMark } from 'codejarpro/plugins';
-const insertMark = cjp.addPlugin('insertMark', InsertMark);
+const insertMark = cjp.addPlugin(InsertMark);
 ```
 
 ### API
@@ -81,49 +58,24 @@ The plugin instance `insertMark` exposes the following core methods:
 
     Adds a marker at a specified position.
 
-    -   `info: object`: An object containing the marker's details, with the following properties:
+    -   `info: object`: An object containing the marker's details:
         -   `markerId: string`: A unique ID for the marker.
         -   `line: number`: The line number (starting from 1).
         -   `column: number`: The column number (starting from 1).
-        -   `message?: string`: A tooltip message to display when hovering over the marker (will be set to the `title` attribute).
+        -   `message?: string`: A tooltip message to display when hovering over the marker.
         -   `markerClass?: string`: The CSS class name to apply to the marker's `<span>` element.
         -   `markerStyle?: string`: Inline styles to apply to the marker.
 
--   **`insertMark.removeMarker(markerId)`**
+-   **`insertMark.removeMarker(markerId)`**: Removes a specific marker by its ID.
 
-    Removes a specific marker by its ID.
-
--   **`insertMark.removeAllMarkers()`**
-
-    Removes all markers created by this plugin, typically used for cleanup before re-validating the code.
-
--   **`insertMark.destroy()`**
-
-    Destroys the plugin instance, cleans up resources, and removes all related DOM elements.
+-   **`insertMark.removeAllMarkers()`**: Removes all markers created by this plugin.
 
 ### Usage Example (JSON Syntax Validation)
 
-```css
-/* Define a style for the error marker */
-.error-marker {
-	--icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="m12 16l4-4l-4-4l-1.4 1.4l1.6 1.6H8v2h4.2l-1.6 1.6zm0 6q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22"/></svg>');
-	-webkit-mask: var(--icon) no-repeat;
-	mask: var(--icon) no-repeat;
-	-webkit-mask-size: 100% 100%;
-	mask-size: 100% 100%;
-	background-color: currentColor;
-	color: inherit;
-	width: 14px;
-	height: 14px;
-	padding: 0.2em;
-	color: red;
-	display: inline-block;
-	position: relative;
-	margin: 0 3px -3px 8px;
-}
-```
-
 ```javascript
+// Assuming 'insertMark' is an instance of the InsertMark plugin
+// and 'cjp' is the CodeJarPro instance.
+
 const code = cjp.toString();
 try {
 	JSON.parse(code);
@@ -131,6 +83,7 @@ try {
 	insertMark.removeMarker('json-syntax-error');
 } catch (e) {
 	// Parse failed, find error position
+	// (parseErrorPosition is a helper function you might need to write)
 	const pos = parseErrorPosition(e.message, code);
 
 	// Add marker at the error position
@@ -139,112 +92,71 @@ try {
 		line: pos.line,
 		column: pos.column,
 		message: e.message,
-		markerClass: 'error-marker'
+		markerClass: 'error-marker' // A CSS class for styling
 	});
 }
 ```
 
 ---
 
-## 3. JSON Validation Plugin (`JsonValidate`)
+## 3\. JSON Validation Plugin (`JsonValidate`)
 
-Automatically detects and marks JSON syntax errors in the editor, providing real-time JSON format validation functionality.
+Automatically detects and marks JSON syntax errors in the editor, providing real-time JSON format validation.
 
 ### Registration and Configuration
 
 ```javascript
-// Browser environment
-const jsonValidate = cjp.addPlugin('jsonValidate', CJP.Plugin.JsonValidate, {
-	enabled: true,
-	markerClass: 'json-error',
-	markerStyle:
-		'background-color: rgba(255, 215, 0, 0.3); padding: 0 5px; border-radius: 2px; text-decoration: wavy underline red; text-underline-offset: 3px; text-decoration-thickness: 2px;'
-});
-
-// ESM environment
 import { JsonValidate } from 'codejarpro/plugins';
-const jsonValidate = cjp.addPlugin('jsonValidate', JsonValidate, {
-	enabled: true
+const jsonValidate = cjp.addPlugin(JsonValidate, {
+	enabled: true,
+	// Optional: custom styling
+	markerClass: 'json-error-marker',
+	// Optional: callback for errors
+	onError: (error, pos) => {
+		if (error) {
+			console.log(`JSON Error: ${error.message} at line ${pos.line}`);
+		} else {
+			console.log('JSON is valid!');
+		}
+	}
 });
 ```
 
 #### Configuration Options
 
--   `config.enabled: boolean | (() => boolean)`: Controls whether the plugin is enabled. Can be a boolean or a function that returns a boolean.
-    -   `true`: Enables JSON validation.
-    -   `false` (default): Disables JSON validation.
+-   `config.enabled: boolean | (() => boolean)`: Controls whether the plugin is enabled. Can be a boolean or a function that returns a boolean. Default: `false`.
 -   `config.markerClass?: string`: The CSS class name to apply to error markers.
--   `config.markerStyle?: string`: Inline styles to apply to error markers. The default style is a yellow background with a red wavy underline.
--   `config.onError?: (error: Error | false, pos?: { line?: number; column?: number; index: number }) => void`: Callback function when there is an error.
-    -   `error`: `false` when there is no error, otherwise the JSON parsing error object.
-    -   `pos`: Error position information, including line number, column number, and index position.
+-   `config.markerStyle?: string`: Inline styles to apply to error markers.
+-   `config.onError?: (error: Error | false, pos?: { line?: number; column?: number; index: number }) => void`: Callback function when an error is found or cleared.
 
 ### API
 
-The plugin instance `jsonValidate` provides the following methods:
-
--   **`jsonValidate.updateConfig(config)`**
-
-    Dynamically updates the plugin configuration.
-
-    **Example:**
-
-    ```javascript
-    // Enable JSON validation
-    jsonValidate.updateConfig({ enabled: true });
-
-    // Customize error marker style
-    jsonValidate.updateConfig({
-    	markerStyle: 'background-color: rgba(255, 99, 71, 0.2); border-bottom: 2px dotted red;'
-    });
-    ```
-
--   **`jsonValidate.validate(code)`**
-
-    Manually triggers a JSON validation.
-
-    -   `code: string`: The JSON string to validate.
-    -   Returns: `true` (JSON format has errors), `undefined` (JSON format is correct or plugin is not enabled).
-
-    **Example:**
-
-    ```javascript
-    const hasError = jsonValidate.validate(cjp.toString());
-    if (!hasError) {
-    	console.log('JSON format is correct');
-    } else {
-    	console.log('JSON format has errors, marked in the editor');
-    }
-    ```
-
--   **`jsonValidate.destroy()`**
-
-    Destroys the plugin instance, cleans up resources, and removes all related DOM elements.
+-   **`jsonValidate.updateConfig(config)`**: Dynamically updates the plugin configuration.
+-   **`jsonValidate.validate(code)`**: Manually triggers a JSON validation. Returns `true` if an error is found.
 
 ---
 
-## 4. Word Counter Plugin (`WordCounter`)
+## 4\. Word Counter Plugin (`WordCounter`)
 
-Real-time counting of characters, words, and display of current cursor position (line and column numbers) in the editor.
+Real-time counting of characters, words, and display of current cursor position (line and column numbers).
 
 ### Registration and Configuration
 
 ```javascript
-// Browser environment
-const wordCounter = cjp.addPlugin('wordCounter', CJP.Plugin.WordCounter, {
-	target: document.getElementById('counter-display'),
-	format: (info) =>
-		`Characters: ${info.chars} | Words: ${info.words} | Position: ${info.row}:${info.col}`
-});
-
-// ESM environment
 import { WordCounter } from 'codejarpro/plugins';
-const wordCounter = cjp.addPlugin('wordCounter', WordCounter);
+
+// Create a target element in your HTML: <div id="counter-display"></div>
+const counterElement = document.getElementById('counter-display');
+
+const wordCounter = cjp.addPlugin(WordCounter, {
+	target: counterElement,
+	format: (info) => `Chars: ${info.chars} | Words: ${info.words} | Pos: ${info.row}:${info.col}`
+});
 ```
 
 #### Configuration Options
 
--   `config.target?: HTMLElement`: The HTML element to display the counting information. If not provided, the plugin will automatically create a div and add it to the editor's parent element.
+-   `config.target?: HTMLElement`: The HTML element to display the counting information. If not provided, a `div` will be created automatically.
 -   `config.format?: (info) => string`: A custom function to format the counting information.
     -   `info.words: number`: Number of words.
     -   `info.chars: number`: Number of characters.
@@ -253,56 +165,23 @@ const wordCounter = cjp.addPlugin('wordCounter', WordCounter);
 
 ### API
 
-The plugin instance `wordCounter` provides the following methods:
-
--   **`wordCounter.updateConfig(config)`**
-
-    Dynamically updates the plugin configuration.
-
-    **Example:**
-
-    ```javascript
-    // Change display target element
-    wordCounter.updateConfig({
-    	target: document.getElementById('new-counter-display')
-    });
-
-    // Custom display format
-    wordCounter.updateConfig({
-    	format: (info) =>
-    		`${info.chars} chars, ${info.words} words, line ${info.row}, column ${info.col}`
-    });
-    ```
-
--   **`wordCounter.destroy()`**
-
-    Destroys the plugin instance, cleans up resources, and removes all related DOM elements.
+-   **`wordCounter.updateConfig(config)`**: Dynamically updates the plugin configuration.
 
 ### Helper Function
 
-The WordCounter plugin also exports a useful helper function for getting the line and column number at a specific index in a string:
+The WordCounter module also exports a useful helper function:
 
--   **`getLineColumn(source, index)`**
+-   **`getLineColumn(source: string, index: number)`**: Gets the line and column number for a character at a specific index in a string.
 
-    Gets the line and column number based on string index.
-
-    -   `source: string`: The original string.
-    -   `index: number`: The target character's index position.
-    -   Returns: An object containing `line` and `column`, or `undefined` (if input is invalid).
-
-    **Example:**
-
-    ```javascript
-    import { getLineColumn } from 'codejarpro/plugins/wordCounter';
-
-    const text = 'Hello\nWorld\nJavaScript';
-    const position = getLineColumn(text, 8); // The character at index 8 is 'W'
-    console.log(position); // Output: { line: 2, column: 1 }
-    ```
+```javascript
+import { getLineColumn } from 'codejarpro/plugins/wordCounter'; // Note the import path
+const text = 'Hello\nWorld';
+const position = getLineColumn(text, 7); // { line: 2, column: 2 }
+```
 
 ---
 
-## 5. Plugin Common API
+## 5\. Plugin Common API
 
 All plugins share the following common method:
 
@@ -312,6 +191,4 @@ All plugins share the following common method:
 // Destroy plugins that are no longer needed
 lineNumbers.destroy();
 jsonValidate.destroy();
-insertMark.destroy();
-wordCounter.destroy();
 ```

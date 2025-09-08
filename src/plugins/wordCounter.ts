@@ -5,7 +5,7 @@
  */
 
 import { createPlugin, debounce, isFn, isObj } from '../libs';
-import { ActionName, CodeJarProInstance } from '../types';
+import type { ActionName, CodeJarProInstance } from '../types';
 
 /**
  * 根据字符串索引获取行列号

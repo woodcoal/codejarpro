@@ -15,8 +15,8 @@ Copyright © 木炭 (WOODCOAL) All rights reserved
 import type { ICode as IProps, ThemeEnums } from './types';
 import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue';
 
-import { CodeJarPro, type CodeJarProInstance } from '../../../src';
-import { LineNumbers, type LineNumbersPlugin } from '../../../src/plugins';
+import { CodeJarPro, type CodeJarProInstance } from 'codejarpro';
+import { LineNumbers, type LineNumbersPlugin } from 'codejarpro/plugins';
 
 import Prism from 'prismjs';
 

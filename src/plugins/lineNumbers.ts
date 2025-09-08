@@ -5,7 +5,7 @@
  */
 
 import { createPlugin, debounce, isObj } from '../libs';
-import { ActionName, CodeJarProInstance } from '../types';
+import type { ActionName, CodeJarProInstance } from '../types';
 
 /** 配置 */
 export type PluginOptions = {
@@ -165,7 +165,9 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 		if (lines.length > 1 && lines[lines.length - 1] === '') {
 			lines.pop();
 		}
-		const lineHeights = Array(lines.length);
+
+		const totalLines = lines.length;
+		const lineHeights = Array(totalLines);
 
 		// 对于自动换行的代码需要特殊处理
 		if (cjp.options.wrap) {
@@ -205,33 +207,55 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 			document.body.removeChild(mirror);
 		}
 
-		// 生成新的行号 HTML
-		let lineNumbersContent = '';
-		for (let i = 0; i < lineHeights.length; i++) {
-			if (lineHeights[i]) {
-				lineNumbersContent += `<div style="height: ${lineHeights[i]}px">${i + 1}</div>`;
-			} else {
-				lineNumbersContent += `<div>${i + 1}</div>`;
+		const currentLineElements = lineNumbers.children;
+		const currentLineCount = currentLineElements.length;
+
+		// 1. 如果新行数比现在多，就添加缺少的行
+		if (totalLines > currentLineCount) {
+			const fragment = document.createDocumentFragment();
+			for (let i = currentLineCount; i < totalLines; i++) {
+				const lineElement = document.createElement('div');
+				lineElement.textContent = `${i + 1}`;
+				fragment.appendChild(lineElement);
+			}
+			lineNumbers.appendChild(fragment);
+		}
+
+		// 2. 如果新行数比现在少，就移除多余的行
+		if (totalLines < currentLineCount) {
+			for (let i = currentLineCount - 1; i >= totalLines; i--) {
+				lineNumbers.removeChild(currentLineElements[i]);
 			}
 		}
 
-		// 更新行号
-		lineNumbers.innerHTML = lineNumbersContent;
+		// 3. 更新所有行的高度（如果需要）
+		for (let i = 0; i < totalLines; i++) {
+			const lineElement = currentLineElements[i] as HTMLElement;
+			const height = lineHeights[i];
+			if (height && lineElement.style.height !== `${height}px`) {
+				lineElement.style.height = `${height}px`;
+			}
+		}
+
+		// // 生成新的行号 HTML
+		// let lineNumbersContent = '';
+		// for (let i = 0; i < lineHeights.length; i++) {
+		// 	if (lineHeights[i]) {
+		// 		lineNumbersContent += `<div style="height: ${lineHeights[i]}px">${i + 1}</div>`;
+		// 	} else {
+		// 		lineNumbersContent += `<div>${i + 1}</div>`;
+		// 	}
+		// }
+
+		// // 更新行号
+		// lineNumbers.innerHTML = lineNumbersContent;
 	};
 
 	/** 销毁 */
 	const destroy = () => {
+		// 刷新并还原编辑器样式，返回容器元素
 		const container = refresh();
 		if (!container) return;
-
-		// // 如果开启了行号，就把 DOM 结构恢复回去
-		// const css = getComputedStyle(container);
-		// editor.style.background = cacheTheme.background;
-		// editor.style.borderRadius = cacheTheme.borderRadius;
-		// editor.style.border = cacheTheme.border;
-		// editor.style.borderRadius = cacheTheme.borderRadius;
-		// editor.style.boxShadow = cacheTheme.boxShadow;
-		// editor.style.margin = css.margin;
 
 		const originalParent = container.parentNode!;
 		originalParent.insertBefore(editor, container);

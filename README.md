@@ -13,7 +13,7 @@
 ## ✨ Core Features
 
 -   **Powerful Plugin System**: Easily mount or unmount features for an editor instance via the `addPlugin` API, achieving complete separation between the core and extensions.
--   **Built-in Core Plugins**: Provides the most commonly used developer plugins, **`LineNumbers`** and **`InsertMark`**, out of the box with no extra configuration needed.
+-   **Built-in Core Plugins**: Provides the most commonly used developer plugins, **`LineNumbers`**, **`InsertMark`**, **`JsonValidate`**, and **`WordCounter`**, out of the box.
 -   **Modern Build**: Packaged using `tsup`, providing ESM, CJS, and IIFE (browser) formats for each module (main library and plugins), perfectly adapting to any modern or traditional front-end project.
 -   **Professional Development Experience**: Full TypeScript support with precise type definitions.
 -   **Extremely Lightweight**: Inherits the core advantages of `codejar`, maintaining a minimal size and zero dependencies.
@@ -37,39 +37,68 @@ This is the simplest way, suitable for static web pages or quick demos.
 <script src="https://unpkg.com/codejarpro/dist/plugins/lineNumbers.min.js"></script>
 
 <script>
-	const editor = document.querySelector('.editor');
+	const editorElement = document.querySelector('.editor');
 
 	// Code highlighting function, you can use libraries like Prism.js
 	const highlight = (editor) => {
-		/* Your highlighting logic... */
+		// Your highlighting logic...
 	};
 
-	const cjp = CJP.CodeJarPro(editor, highlight, { tab: '\t' });
+	const cjp = CJP.CodeJarPro(editorElement, highlight, { tab: '\t' });
 
 	// Register and enable the line numbers plugin
-	cjp.addPlugin('lineNumbers', CJP.Plugin.LineNumbers, { show: true });
+	cjp.addPlugin(CJP.Plugin.LineNumbers, { show: true });
 
 	cjp.updateCode(`function sayHello() {\n  console.log('Hello, CodeJarPro!');\n}`);
 </script>
 ```
 
-### 2\. In Modern Front-end Projects (e.g., Vite, Webpack)
+### 2\. In Modern Front-end Projects (e.g., Vue with Vite)
 
-```javascript
-import { CodeJarPro } from 'codejarpro';
-import { LineNumbers } from 'codejarpro/plugins';
+This example shows how to integrate CodeJarPro in a Vue 3 component.
 
-const editor = document.querySelector('#editor');
-const highlight = (editor) => {
-	/* Your highlighting logic... */
-};
+```vue
+<template>
+	<div ref="editorRef" style="height: 200px; border: 1px solid #ccc;"></div>
+</template>
 
-const cjp = CodeJarPro(editor, highlight, { tab: '\t' });
+<script setup>
+	import { onMounted, onBeforeUnmount, ref } from 'vue';
+	import { CodeJarPro } from 'codejarpro';
+	import { LineNumbers } from 'codejarpro/plugins';
+	// Import your preferred highlighter, e.g., Prism.js
+	import Prism from 'prismjs';
 
-// Register and enable the line numbers plugin
-cjp.addPlugin('lineNumbers', LineNumbers, { show: true });
+	const editorRef = ref(null);
+	let cjp = null;
 
-cjp.updateCode(`function sayHello() {\n  console.log('Hello, CodeJarPro!');\n}`);
+	onMounted(() => {
+		if (editorRef.value) {
+			const highlight = (editor) => {
+				editor.innerHTML = Prism.highlight(
+					editor.textContent || '',
+					Prism.languages.javascript,
+					'javascript'
+				);
+			};
+
+			cjp = CodeJarPro(editorRef.value, highlight, { tab: '\t' });
+
+			// Register and enable the line numbers plugin
+			cjp.addPlugin(LineNumbers, { show: true });
+
+			cjp.updateCode(`function sayHello() {\n  console.log('Hello, CodeJarPro!');\n}`);
+
+			cjp.onUpdate((code) => {
+				console.log('Code updated:', code);
+			});
+		}
+	});
+
+	onBeforeUnmount(() => {
+		cjp?.destroy();
+	});
+</script>
 ```
 
 ---
@@ -81,10 +110,10 @@ cjp.updateCode(`function sayHello() {\n  console.log('Hello, CodeJarPro!');\n}`)
 This is the entry function to create an editor instance.
 
 -   **`editor: HTMLElement`**: Required. The DOM element to be used as the editor.
--   **`highlight?: (editor: HTMLElement) => void`**: Optional. A function for syntax highlighting. When the editor content is updated, this function will be called with the editor element as an argument. You can process `editor.innerHTML` inside this function to implement syntax highlighting.
+-   **`highlight?: (editor: HTMLElement, pos?: Position) => void`**: Optional. A function for syntax highlighting. When the editor content is updated, this function will be called.
 -   **`options?: Partial<Options>`**: Optional. A configuration object to customize the editor's behavior.
 
-#### Configuration Options (Options)
+#### Configuration Options (`Options`)
 
 -   `tab: string` (default: `'\t'`): The string to insert when the Tab key is pressed.
 -   `indentOn: RegExp` (default: `/[({\[]$/`): A regular expression that triggers auto-indentation upon matching.
@@ -94,11 +123,13 @@ This is the entry function to create an editor instance.
 -   `preserveIdent: boolean` (default: `true`): Whether to preserve indentation on new lines.
 -   `addClosing: boolean` (default: `true`): Whether to automatically close brackets and quotes.
 -   `history: boolean` (default: `true`): Whether to enable undo/redo history.
+-   `wrap: boolean` (default: `true`): Whether to enable code line wrapping.
+-   `readonly: boolean` (default: `false`): Whether to make the editor read-only.
 -   `autoclose: object`: Detailed configuration for the autoclosing feature.
 -   `debounce: object`: Debounce configuration, in milliseconds.
     -   `highlight: number` (default: `300`): Debounce delay for the highlight function.
     -   `update: number` (default: `300`): Debounce delay for the `onUpdate` callback.
--   `disableDebug: boolean` (default: `true`): Whether to enable debugging. When enabled, it will print runtime logs to the console.
+-   `disableDebug: boolean` (default: `true`): Whether to disable debugging. When enabled, it will print runtime logs to the console.
 
 ---
 
@@ -112,6 +143,7 @@ The `CodeJarPro(...)` function returns an editor instance (which we'll call `cjp
 -   **`cjp.onUpdate((code: string) => void)`**: Registers a callback function that is triggered when the editor's code changes (with debouncing).
 -   **`cjp.toString(): string`**: Gets the plain text content of the editor.
 -   **`cjp.destroy()`**: Completely destroys the editor instance, removing all event listeners, plugins, and automatically created DOM elements to prevent memory leaks.
+-   **`cjp.refresh()`**: Manually triggers a re-highlight of the editor without changing its content.
 
 #### Cursor & History
 
@@ -121,8 +153,8 @@ The `CodeJarPro(...)` function returns an editor instance (which we'll call `cjp
 
 #### Plugin Management
 
--   **`cjp.addPlugin(name, plugin, config?)`**: Registers a plugin. Returns the plugin instance, through which you can call the plugin's specific APIs.
--   **`cjp.removePlugin(name)`**: Safely uninstalls a plugin by its name.
+-   **`cjp.addPlugin(plugin, config?)`**: Registers a plugin. Returns the plugin instance, through which you can call the plugin's specific APIs.
+-   **`cjp.removePlugin(name)`**: Safely uninstalls a plugin by its name (`string`) or by passing the plugin instance itself.
 -   **`cjp.updatePluginConfig(name, config)`**: Updates the configuration of a registered plugin.
 -   **`cjp.destroyPlugins()`**: Destroys and removes all registered plugins.
 
@@ -146,26 +178,33 @@ All extended functionalities of `CodeJarPro` are implemented through plugins.
 
 ### Plugin Development
 
-You can easily create your own plugins to extend the editor's functionality. A plugin is essentially a function that returns an object conforming to a specific interface.
+You can easily create your own plugins to extend the editor's functionality. A plugin is essentially a function or an object that conforms to the `IPlugin` interface.
 
 #### Basic Structure of a Plugin
 
 ```typescript
-import { CodeJarPro, IPlugin, ActionName } from 'codejarpro';
+import { CodeJarProInstance, IPlugin, ActionName } from 'codejarpro';
 
-// Your plugin function
-export function MyAwesomePlugin(cjp: CodeJarPro, config?: MyPluginOptions) {
+// Define your plugin's options type if needed
+interface MyPluginOptions {
+	greeting: string;
+}
+
+// Your plugin can be a function that returns the plugin object
+export function MyAwesomePlugin(cjp: CodeJarProInstance, config?: MyPluginOptions) {
 	// Plugin initialization logic...
 	console.log('MyAwesomePlugin is initialized with config:', config);
 
 	// Must return an object that conforms to the IPlugin interface
 	return {
+		name: 'MyAwesomePlugin', // A unique name for your plugin
+
 		// Core: onAction is the entry point for all editor events
 		onAction: (params) => {
 			const { name, code, event } = params;
 
 			if (name === 'keyup') {
-				console.log('User typed! New code length:', code.length);
+				console.log(`${config?.greeting}! New code length:`, code.length);
 			}
 
 			if (name === 'keydown' && (event as KeyboardEvent).key === 'F1') {
@@ -176,21 +215,16 @@ export function MyAwesomePlugin(cjp: CodeJarPro, config?: MyPluginOptions) {
 
 		// Optional: Allows external updates to the plugin's configuration
 		updateConfig: (newConfig: MyPluginOptions) => {
-			console.log('Config updated:', newConfig);
-			// ... Update the plugin's internal state
+			config = { ...config, ...newConfig };
+			console.log('Config updated:', config);
 		},
 
 		// Optional: Cleanup function, called when the plugin is removed
 		destroy: () => {
 			console.log('MyAwesomePlugin is destroyed!');
 			// ... Remove event listeners, clean up DOM, etc., here
-		},
-
-		// You can also expose custom APIs
-		myCustomMethod: () => {
-			alert('Hello from MyAwesomePlugin!');
 		}
-	} as IPlugin<MyPluginOptions>;
+	};
 }
 ```
 
@@ -206,17 +240,10 @@ The `params` argument of `onAction` includes:
 
 Available `ActionName`s include:
 
--   `beforeUpdate`
--   `afterUpdate`
--   `keydown`
--   `keyup`
--   `focus`
--   `blur`
--   `paste`
--   `cut`
--   `scroll`
--   `resize`
--   `highlight`
+-   `beforeUpdate`: Triggered before the `onUpdate` callback. Can return `true` to prevent the update.
+-   `afterUpdate`: Triggered after the `onUpdate` callback.
+-   `highlight`: Triggered after the syntax highlighting is complete.
+-   `keydown`, `keyup`, `click`, `focus`, `blur`, `paste`, `cut`, `scroll`, `resize`, `refresh`.
 
 ## Acknowledgements
 

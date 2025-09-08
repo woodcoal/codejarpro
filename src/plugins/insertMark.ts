@@ -5,7 +5,7 @@
  */
 
 import { createPlugin, visit } from '../libs';
-import { CodeJarProInstance } from '../types';
+import type { CodeJarProInstance } from '../types';
 
 /** 将行列号转换为字符索引 */
 export function rowColToIndex(code: string, line: number, col: number): number {
@@ -55,9 +55,14 @@ export function insertMarkerNode(options: {
 		const id = markerId || 'codejarpro_marker';
 		const parent = startNode.parentNode!;
 
-		// 如果已经标记过则不再处理
-		const isMarked = parent instanceof HTMLElement && parent.classList.contains(id);
-		if (isMarked) return null;
+		// 如果父节点本身就是我们创建的标记，说明这个词已经被标记了，
+		if (parent instanceof HTMLElement && parent.classList.contains(id)) {
+			parent.className = `${className} ${id}`;
+			parent.style = style || '';
+			parent.title = message || '';
+
+			return parent; // 返回现有的标记元素
+		}
 
 		const content = startNode.textContent || '';
 

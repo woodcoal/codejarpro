@@ -4,7 +4,7 @@
  * Copyright © 木炭 (WOODCOAL) All rights reserved
  */
 
-import type { CodeJarProInstance, Options } from '../../../src';
+import type { CodeJarProInstance, Options } from 'codejarpro';
 
 /** 主题枚举 */
 export type ThemeEnums = 'default' | 'dark' | 'light' | 'auto' | 'custom';

@@ -9,7 +9,7 @@
  * 原项目作者：Anton Medvedev
  */
 
-import {
+import type {
 	Position,
 	Options,
 	HistoryRecord,

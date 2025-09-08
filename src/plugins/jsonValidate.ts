@@ -5,7 +5,7 @@
  */
 
 import { createPlugin, isFn, isObj, parseErrorPosition } from '../libs';
-import { ActionName, CodeJarProInstance } from '../types';
+import type { ActionName, CodeJarProInstance } from '../types';
 import { insertMarkerNode, rowColToIndex } from './insertMark';
 
 /** 配置 */
