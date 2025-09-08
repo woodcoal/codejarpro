@@ -1,0 +1,20 @@
+/*
+ * @author        木炭 <woodcoal@qq.com>
+ * @date          2025-09-01 01:13:55
+ * Copyright © 木炭 (WOODCOAL) All rights reserved
+ */
+
+.theme-default {
+	@import (inline) 'prismjs/themes/prism.css';
+}
+
+:root .theme-auto,
+:root[theme-mode='light'] .theme-auto,
+.theme-light {
+	@import (inline) 'prismjs/themes/prism-solarizedlight.css';
+}
+
+:root[theme-mode='dark'] .theme-auto,
+.theme-dark {
+	@import (inline) 'prismjs/themes/prism-okaidia.css';
+}

@@ -4,5 +4,7 @@
  * Copyright © 木炭 (WOODCOAL) All rights reserved
  */
 
-export { default as LineNumbers } from './lineNumbers.js';
-export { default as InsertMark } from './insertMark.js';
+export { default as LineNumbers, type LineNumbersPlugin } from './lineNumbers';
+export { default as InsertMark, type InsertMarkPlugin } from './insertMark';
+export { default as JsonValidate, type JsonValidatePlugin } from './jsonValidate';
+export { default as WordCounter, type WordCounterPlugin } from './wordCounter';

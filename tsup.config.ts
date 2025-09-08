@@ -1,20 +1,7 @@
-/*
- * ------------------------------------------------------------
- *
- * 	Copyright © 2025 湖南大沥网络科技有限公司.
- *
- * 	  author: 木炭
- * 	   email: woodcoal@qq.com
- * 	homepage: http://www.hunandali.com/
- *
- * ------------------------------------------------------------
- *
- * 	打包配置
- *
- * 	file: tsup.config.ts
- * 	time: 2025-08-13 10:34:09
- *
- * ------------------------------------------------------------
+/**
+ * @author        木炭 <woodcoal@qq.com>
+ * @date          2025-09-04 13:02:34
+ * Copyright © 木炭 (WOODCOAL) All rights reserved
  */
 
 import { Options } from 'tsup';
@@ -57,5 +44,7 @@ export default defineConfig([
 	createOptions('src/codejarpro.ts', 'codejarpro', 'CodeJarPro'),
 	createOptions('src/plugins/index.ts', 'plugins/index', 'Plugin'),
 	createOptions('src/plugins/insertMark.ts', 'plugins/insertMark', 'Plugin.InsertMark'),
-	createOptions('src/plugins/lineNumbers.ts', 'plugins/lineNumbers', 'Plugin.LineNumbers')
+	createOptions('src/plugins/lineNumbers.ts', 'plugins/lineNumbers', 'Plugin.LineNumbers'),
+	createOptions('src/plugins/jsonValidate.ts', 'plugins/jsonValidate', 'Plugin.JsonValidate'),
+	createOptions('src/plugins/wordCounter.ts', 'plugins/wordCounter', 'Plugin.WordCounter')
 ]);

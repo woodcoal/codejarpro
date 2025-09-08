@@ -1,0 +1,51 @@
+{
+	"name": "codejarpro-vue",
+	"title": "CodeJarPro Vue",
+	"description": "CodeJarPro Vue 是一个基于 Vue 3 的代码编辑器",
+	"version": "1.25.903",
+	"author": "木炭 <woodcoal@qq.com>",
+	"homepage": "https://github.com/woodcoal/",
+	"private": true,
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/woodcoal/codejarpro-vue.git"
+	},
+	"type": "module",
+	"license": "MIT",
+	"keywords": [
+		"codejar",
+		"vue",
+		"editor",
+		"code",
+		"highlight"
+	],
+	"main": "dist/index.js",
+	"module": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"dev": "vite",
+		"chk": "vue-tsc",
+		"build": "vue-tsc -b && vite build"
+	},
+	"dependencies": {
+		"codejarpro": "1.25.907",
+		"prismjs": "^1.30.0"
+	},
+	"devDependencies": {
+		"@types/node": "^24.3.1",
+		"@types/prismjs": "^1.26.5",
+		"@vitejs/plugin-vue": "^6.0.1",
+		"less": "^4.4.1",
+		"typescript": "~5.9.2",
+		"vite": "^7.1.4",
+		"vite-plugin-dts": "^4.5.4",
+		"vue": "^3.5.21",
+		"vue-tsc": "^3.0.6"
+	},
+	"peerDependencies": {
+		"vue": "^3.0.0"
+	}
+}

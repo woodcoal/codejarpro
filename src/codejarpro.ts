@@ -9,14 +9,19 @@
  * 原项目作者：Anton Medvedev
  */
 
-import { Position, Options, HistoryRecord, ActionName, Plugin, IPlugin } from './types.js';
-import { isFn, debounce, visit, isObj } from './libs.js';
+import {
+	Position,
+	Options,
+	HistoryRecord,
+	ActionName,
+	Plugin,
+	IPlugin,
+	CodeJarProInstance
+} from './types';
+import { isFn, debounce, visit, isObj } from './libs';
 
 /** 声明一个全局 window 变量的引用，方便在不同环境（如服务器端渲染）下进行替换 */
 const globalWindow = window;
-
-// 导出 CodeJar 实例的类型，方便在其他地方进行类型提示
-type CodeJarPro = ReturnType<typeof CodeJarPro>;
 
 // 全局唯一标识符
 let globalId = 0;
@@ -31,7 +36,7 @@ export default function CodeJarPro(
 	editor: HTMLElement,
 	highlight?: (e: HTMLElement, pos?: Position) => void,
 	opt: Partial<Options> = {}
-) {
+): CodeJarProInstance {
 	const DEBOUNCE_HIGHLIGHT = 300;
 	const DEBOUNCE_UPDATE = 300;
 
@@ -55,6 +60,8 @@ export default function CodeJarPro(
 			update: DEBOUNCE_UPDATE
 		},
 		disableDebug: true,
+		wrap: true,
+		readonly: false,
 		...opt
 	};
 
@@ -82,7 +89,21 @@ export default function CodeJarPro(
 	let focus = false;
 
 	// 定义一个 onUpdate 回调函数，当代码更新时会被调用
-	let onUpdate: (code: string) => void | undefined = () => void 0;
+	let onUpdate = (code: string) => {
+		debug('No onUpdate function.', code);
+	};
+
+	// 定义一个防抖更新
+	const debounceUpdate = debounce((code: string) => {
+		debug('onUpdate', code);
+
+		// 如果返回 true 将中止后续代码更新
+		if (hookPlugin('beforeUpdate') === true) return;
+
+		onUpdate(code);
+
+		hookPlugin('afterUpdate');
+	}, delayUpdate);
 
 	// 定义一个 onAction 回调函数，以便操作变化时调用，返回 true 表示将中止系统内部其他操作。此操作早于插件操作
 	let onAction: (name: ActionName, code: string, event?: Event) => void | boolean = () => void 0;
@@ -90,24 +111,11 @@ export default function CodeJarPro(
 	// `prev` 用于在按键事件发生前，保存编辑器的文本内容，方便判断内容是否有变化
 	let prev: string;
 
-	// --- 初始化编辑器元素的属性 ---
-	// 设置 contenteditable 属性，允许用户编辑内容。'plaintext-only' 可以防止粘贴富文本格式。
-	editor.setAttribute('contenteditable', 'plaintext-only');
-
-	// 根据配置设置是否开启拼写检查
-	editor.setAttribute('spellcheck', options.spellcheck ? 'true' : 'false');
-
 	// 移除编辑器的默认轮廓线，避免在聚焦时显示难看的轮廓线
 	editor.style.outline = 'none';
 
-	// 设置长单词或 URL 自动换行
-	editor.style.overflowWrap = 'break-word';
-
 	// 当内容超出时，显示垂直滚动条
 	editor.style.overflowY = 'auto';
-
-	// 保留空白符并自动换行
-	editor.style.whiteSpace = 'pre-wrap';
 
 	/** 警告信息 */
 	function warn(...data: any[]) {
@@ -136,16 +144,14 @@ export default function CodeJarPro(
 	 * @param plugin 插件对象
 	 * @param config 插件配置
 	 */
-	function addPlugin<T extends object>(
-		cjp: CodeJarPro,
-		name: string,
-		plugin: Plugin<T>,
+	function addPlugin<T extends object, P extends IPlugin<T>>(
+		cjp: CodeJarProInstance,
+		plugin: Plugin<T, P>,
 		config?: T
 	) {
-		if (!name) return warn('plugin name is required');
 		if (!plugin) return warn('plugin is required');
 
-		let data: IPlugin<T> | undefined;
+		let data: P | undefined;
 
 		// 是否函数型插件
 		if (isFn(plugin)) {
@@ -157,23 +163,22 @@ export default function CodeJarPro(
 
 		if (!data) return warn('plugin is not a function or object');
 
-		name = name.toLowerCase();
-		if (plugins.has(name)) return warn(`"${name}" plugin already added`);
+		if (plugins.has(data.name)) return warn(`"${data.name}" plugin already added`);
 
-		plugins.set(name, data);
-		debug(`"${name}" plugin added`, data);
+		plugins.set(data.name, data);
+		debug(`"${data.name}" plugin added`, data);
 
 		return data;
 	}
 
 	/**
 	 * 移除插件
-	 * @param name 插件名称
+	 * @param name 插件或者插件名称
 	 */
-	function removePlugin(name: string) {
+	function removePlugin(name: IPlugin | string) {
+		if (isObj(name)) name = name.name;
 		if (!name) return warn('plugin name is required');
 
-		name = name.toLowerCase();
 		const plugin = plugins.get(name);
 		if (!plugin) return warn(`"${name}" plugin not found`);
 
@@ -198,13 +203,13 @@ export default function CodeJarPro(
 
 	/**
 	 * 更新插件配置
-	 * @param name 插件名称
+	 * @param name 插件或者插件名称
 	 * @param config 插件配置
 	 */
-	function updatePluginConfig<T extends object>(name: string, config: T) {
+	function updatePluginConfig<T extends object>(name: IPlugin | string, config: T) {
+		if (isObj(name)) name = name.name;
 		if (!name) return warn('plugin name is required');
 
-		name = name.toLowerCase();
 		const plugin = plugins.get(name);
 		if (!plugin) return warn(`"${name}" plugin not found`);
 
@@ -218,6 +223,14 @@ export default function CodeJarPro(
 	 * @returns 如果任何一个钩子返回 true，则返回 true
 	 */
 	function hookPlugin(hookName: ActionName, event?: Event): boolean {
+		// 检查只读状态，仅滚动，高亮和调整大小事件才允许继续后续操作
+		if (
+			checkReadonly() === true &&
+			!['highlight', 'scroll', 'resize', 'refresh'].includes(hookName)
+		) {
+			return true;
+		}
+
 		// 系统操作先执行
 		let result = !!onAction(hookName, toString(), event);
 		if (result === true) return true;
@@ -244,20 +257,64 @@ export default function CodeJarPro(
 
 	/* ******** 插件相关操作: END ******** */
 
-	// --- 处理浏览器兼容性问题 ---
-	// 检测 Firefox 浏览器版本
-	const matchFirefoxVersion = window.navigator.userAgent.match(/Firefox\/([0-9]+)\./);
-	const firefoxVersion = matchFirefoxVersion ? parseInt(matchFirefoxVersion[1]) : 0;
 	// `isLegacy` 标志位，用于处理不支持 'plaintext-only' 的老旧浏览器或特定版本的火狐
 	let isLegacy = false;
-	if (editor.contentEditable !== 'plaintext-only' || firefoxVersion >= 136) isLegacy = true;
-	// 如果是老旧模式，就回退到 contenteditable="true"
-	if (isLegacy) editor.setAttribute('contenteditable', 'true');
+
+	// 缓存只读状态，方式多次操作属性
+	let readonly = !options.readonly;
+
+	// 编辑模式检查
+	const checkReadonly = () => {
+		if (readonly === options.readonly) return options.readonly;
+		readonly = options.readonly;
+
+		if (options.readonly) {
+			// 只读模式，取消编辑功能
+			editor.removeAttribute('contenteditable');
+			editor.removeAttribute('spellcheck');
+			return;
+		}
+		// 设置 contenteditable 属性，允许用户编辑内容。'plaintext-only' 可以防止粘贴富文本格式。
+		editor.setAttribute('contenteditable', 'plaintext-only');
+
+		// 根据配置设置是否开启拼写检查
+		editor.setAttribute('spellcheck', options.spellcheck ? 'true' : 'false');
+
+		// --- 处理浏览器兼容性问题 ---
+		// 检测 Firefox 浏览器版本
+		const matchFirefoxVersion = window.navigator.userAgent.match(/Firefox\/([0-9]+)\./);
+		const firefoxVersion = matchFirefoxVersion ? parseInt(matchFirefoxVersion[1]) : 0;
+
+		if (editor.contentEditable !== 'plaintext-only' || firefoxVersion >= 136) isLegacy = true;
+
+		// 如果是老旧模式，就回退到 contenteditable="true"
+		if (isLegacy) editor.setAttribute('contenteditable', 'true');
+
+		return options.readonly;
+	};
+
+	checkReadonly();
+
+	/** 更新自动换行 */
+	const updateWrap = (el: HTMLElement) => {
+		if (!el) return;
+
+		el.style.overflowWrap = options.wrap ? 'break-word' : 'normal';
+		el.style.whiteSpace = options.wrap ? 'pre-wrap' : 'pre';
+		el.style.wordBreak = options.wrap ? 'break-all' : 'keep-all';
+	};
 
 	// 封装一下高亮函数，方便调用
 	const doHighlight = (editor: HTMLElement, pos?: Position) => {
 		if (typeof highlight !== 'function') return;
 		highlight(editor, pos);
+
+		/** 更新自动换行 */
+		editor.childNodes.forEach((el) => {
+			el.ELEMENT_NODE && updateWrap(el as HTMLElement);
+		});
+		updateWrap(editor);
+
 		hookPlugin('highlight');
 	};
 
@@ -312,7 +369,7 @@ export default function CodeJarPro(
 	 * @param event 键盘事件对象
 	 */
 	on('keydown', (event) => {
-		if (hookPlugin('keydown', event)) {
+		if (hookPlugin('keydown', event) === true) {
 			event.preventDefault(); // 如果插件返回 true，就阻止默认行为
 			return;
 		}
@@ -337,7 +394,7 @@ export default function CodeJarPro(
 	});
 
 	on('keyup', (event) => {
-		if (hookPlugin('keyup', event)) {
+		if (hookPlugin('keyup', event) === true) {
 			event.preventDefault(); // 如果插件返回 true，就阻止默认行为
 			return;
 		}
@@ -347,7 +404,11 @@ export default function CodeJarPro(
 
 		if (prev !== toString()) debounceHighlight(); // 如果内容改变了，触发防抖高亮
 		debounceRecordHistory(event); // 触发防抖历史记录
-		onUpdate(toString()); // 调用更新回调
+		debounceUpdate(toString()); // 调用更新回调
+	});
+
+	on('click', (event) => {
+		hookPlugin('click', event);
 	});
 
 	on('focus', (_event) => {
@@ -365,7 +426,7 @@ export default function CodeJarPro(
 		handlePaste(event); // 处理粘贴逻辑
 		hookPlugin('paste', event);
 		recordHistory(); // 粘贴后再次记录历史
-		onUpdate(toString()); // 调用更新回调
+		debounceUpdate(toString()); // 调用更新回调
 	});
 
 	on('cut', (event) => {
@@ -373,21 +434,17 @@ export default function CodeJarPro(
 		handleCut(event); // 处理剪切逻辑
 		hookPlugin('cut', event);
 		recordHistory(); // 剪切后再次记录历史
-		onUpdate(toString()); // 调用更新回调
+		debounceUpdate(toString()); // 调用更新回调
 	});
 
 	// 新增滚动事件监听，实现行号和编辑器的同步滚动
 	on('scroll', (event) => {
 		hookPlugin('scroll', event);
-		// if (options.lineNumbers && lineNumbersEl) {
-		// 	lineNumbersEl.scrollTop = editor.scrollTop;
-		// }
 	});
 
 	// 新增尺寸变化监听，实现自动更新行号
 	const resizeObserver = new ResizeObserver(() => {
 		hookPlugin('resize');
-		// debounceUpdateLineNumbers();
 	});
 	resizeObserver.observe(editor);
 
@@ -840,6 +897,9 @@ export default function CodeJarPro(
 
 	/** 获取 Selection 对象，兼容 Shadow DOM */
 	function getSelection() {
+		// 强制获取焦点，防止后续选取获取存在问题
+		editor.focus();
+
 		// @ts-ignore
 		return editor.getRootNode().getSelection() as Selection;
 	}
@@ -847,7 +907,9 @@ export default function CodeJarPro(
 	/** 暴露给外部的 API */
 	return {
 		/** 更新编辑器的配置选项 */
-		updateOptions(newOptions: Partial<Options>) {
+		updateOptions(newOptions) {
+			debug('updateOptions', newOptions);
+
 			Object.assign(options, newOptions);
 		},
 
@@ -856,23 +918,27 @@ export default function CodeJarPro(
 		 * @param code 新的代码字符串
 		 * @param callOnUpdate 是否触发 onUpdate 回调，默认为 true
 		 */
-		updateCode(code: string, callOnUpdate: boolean = true) {
+		updateCode(code, callOnUpdate = true) {
+			debug('updateCode', code);
 			editor.textContent = code; // 设置文本内容
 			doHighlight(editor); // 执行高亮
-			callOnUpdate && onUpdate(code); // 触发回调
+			callOnUpdate && debounceUpdate(code); // 触发回调
 		},
 
+		/** 刷新，不更新编辑器代码强制重新高亮，不会触发 onUpdate 回调 */
+		refresh: debounce(() => {
+			debug('refresh');
+			hookPlugin('refresh');
+			doHighlight(editor); // 执行高亮
+		}, delayUpdate),
+
 		/** 注册一个代码更新时的回调函数 */
-		onUpdate(callback: (code: string) => void) {
-			onUpdate = debounce((code: string) => {
-				hookPlugin('beforeUpdate');
-				callback(code);
-				hookPlugin('afterUpdate');
-			}, delayUpdate);
+		onUpdate(callback) {
+			isFn(callback) && (onUpdate = callback);
 		},
 
 		/** 注册一个操作时的回调函数 */
-		onAction(callback: (name: ActionName, code: string, event?: Event) => void | boolean) {
+		onAction(callback) {
 			isFn(callback) && (onAction = callback);
 		},
 
@@ -901,12 +967,9 @@ export default function CodeJarPro(
 		recordHistory,
 
 		/** 添加插件 */
-		addPlugin<T extends object>(
-			name: string,
-			plugin: Plugin,
-			config?: T
-		): IPlugin<T> | undefined {
-			return addPlugin(this, name, plugin, config);
+		addPlugin(plugin, config) {
+			if (!plugin) return;
+			return addPlugin(this, plugin, config);
 		},
 
 		/** 移除插件 */
@@ -932,6 +995,9 @@ export default function CodeJarPro(
 
 			// 断开尺寸变化监听
 			resizeObserver.disconnect();
-		}
+		},
+
+		warn,
+		debug
 	};
 }

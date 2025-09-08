@@ -4,6 +4,8 @@
  * Copyright © 木炭 (WOODCOAL) All rights reserved
  */
 
+import { CodeJarProInstance, IPlugin } from './types';
+
 /**
  * 检查是否为函数
  * @param fn 要检查的变量
@@ -47,4 +49,62 @@ export function visit(editor: HTMLElement, visitor: (el: Node) => 'stop' | undef
 		if (el.firstChild) queue.push(el.firstChild);
 		el = queue.pop();
 	}
+}
+
+/**
+ * 从错误信息中解析出行号和列号
+ * 不同的浏览器和编辑器给的错误信息格式不一样，但通常会包含行号或位置信息
+ * 比如：`SyntaxError: Unexpected token , in JSON at position 123`
+ * 或者：`SyntaxError: JSON.parse: unexpected end of data at line 2 column 5 of the JSON data`
+ * @param message 错误信息
+ * @param content 编辑器内的完整文本，用于 position 计算
+ * @returns 返回行列数据
+ */
+export function parseErrorPosition(message: string, content: string) {
+	// Chrome/Edge: "Unexpected token ... at position X"
+	let match = message.match(/at position (\d+)/);
+	if (match) {
+		const pos = parseInt(match[1], 10);
+		const textBeforeError = content.substring(0, pos);
+		const lines = textBeforeError.split('\n');
+		const line = lines.length;
+		const column = lines[lines.length - 1].length + 1;
+		return { line, column };
+	}
+
+	// Firefox: "... at line X column Y"
+	match = message.match(/line (\d+) column (\d+)/);
+	if (match) {
+		return { line: parseInt(match[1], 10), column: parseInt(match[2], 10) };
+	}
+
+	return {};
+}
+
+/**
+ * 创建插件
+ * @param options 插件选项
+ * @param options.cjp CodeJarPro 实例
+ * @param options.config 插件配置
+ * @param options.createFn 插件生成回调函数
+ * @returns
+ */
+export function createPlugin<T extends object = any, P extends IPlugin<T> = IPlugin<T>>(
+	createFn: (cjp: CodeJarProInstance, config?: T) => P
+) {
+	return (cjp: CodeJarProInstance, config?: T) => {
+		const { id = '' } = cjp;
+
+		/** 操作列表 */
+		const plugins = new Map<string, P>();
+
+		/** 返回指定操作 */
+		if (plugins.has(id)) return plugins.get(id)!;
+
+		/** 创建操作 */
+		const plugin = createFn(cjp, config);
+		plugins.set(id, plugin);
+
+		return plugin;
+	};
 }

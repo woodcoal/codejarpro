@@ -4,148 +4,241 @@
  * Copyright © 木炭 (WOODCOAL) All rights reserved
  */
 
-import { debounce, isObj } from '../libs.js';
-import { ActionName, CodeJarPro, IPlugin } from '../types.js';
+import { createPlugin, debounce, isObj } from '../libs';
+import { ActionName, CodeJarProInstance } from '../types';
+
+/** 配置 */
+export type PluginOptions = {
+	show: boolean;
+};
 
 /**
  * 行号插件
  * @param editor 编辑器实例
  * @param show 是否显示行号
  */
-function creteaPlugin(cjp: CodeJarPro, config: LineNumbersOptions) {
+function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 	// 一个内部变量，用于存储行号元素的引用
-	const { editor, options } = cjp;
+	const { editor, options, id } = cjp;
 
-	let lineNumbersEl: HTMLElement | null = null;
+	config = {
+		show: true,
+		...config
+	};
 
-	const NAME_CONTAINER = 'codejarpro-container';
-	const NAME_LINENUMBER = 'line-numbers';
+	const CONTAINER_ID = `${id}-line-numbers`;
+	const LINENUMBER_NAME = 'codejarpro-line-numbers';
 
-	// 初始化操作
-	const init = () => {
+	// 缓存背景颜色
+	let background = '';
+	let padding = '';
+
+	/** 获取行号元素 */
+	const getElement = () => {
+		// 查找编辑器区域
+		let container = document.getElementById(CONTAINER_ID);
+
+		// 非行号模式不能返回元素
 		if (!config.show) {
-			if (lineNumbersEl) lineNumbersEl.style.display = 'none';
-			return;
+			if (container) {
+				// 还原编辑器样式
+				// editor.style.flexGrow = '0';
+
+				const originalParent = container.parentNode!;
+				originalParent.insertBefore(editor, container);
+				originalParent.removeChild(container);
+				container.remove();
+			}
+
+			return null;
 		}
 
-		// 行号项目已经存在则无需再初始化，直接显示
-		if (lineNumbersEl) {
-			lineNumbersEl.style.display = 'block';
-			return;
+		// 不存在创建
+		if (!container) {
+			container = document.createElement('div');
+			container.id = CONTAINER_ID;
+			container.style.display = 'flex';
+			container.style.flexDirection = 'row-reverse';
+
+			// 修改编辑器样式
+			editor.style.flexGrow = '1';
+
+			// 替换掉原来的 editor，并将 editor 放入 container 里
+			editor.parentElement!.insertBefore(container, editor);
+			container.appendChild(editor);
 		}
 
-		// 检查是否已经设置过
-		const editorParent = editor.parentNode as HTMLElement;
-		if (editorParent?.classList.contains(NAME_CONTAINER)) return;
+		// 查找行号元素
+		let el = container.querySelector(`.${LINENUMBER_NAME}`) as HTMLDivElement;
+		let wrap: HTMLElement;
+		if (el) {
+			wrap = el.parentElement!;
+		} else {
+			// 编辑器默认样式
+			wrap = document.createElement('div');
+			wrap.style.display = 'block';
+			wrap.style.display = 'block';
+			wrap.style.textAlign = 'right';
+			wrap.style.userSelect = 'none';
 
-		// 编辑器默认样式
-		const css = getComputedStyle(editor);
+			// 创建行号元素
+			el = document.createElement('div');
+			el.className = LINENUMBER_NAME;
+			el.style.paddingLeft = '0.5rem';
+			el.style.paddingRight = '0.5rem';
+			el.style.overflow = 'hidden';
+			el.style.borderRight = '1px solid #ddd';
+			el.style.opacity = '0.5';
+			el.innerHTML = '<div>1</div>';
 
-		// 创建编辑器外部容器
-		const container = document.createElement('div');
-		container.className = NAME_CONTAINER;
-		container.style.display = 'flex';
-		container.style.resize = 'both';
-		container.style.background = css.background;
-		container.style.marginTop = css.borderTopWidth;
-		container.style.marginBottom = css.borderBottomWidth;
-		container.style.marginLeft = css.borderLeftWidth;
-		container.style.borderTopLeftRadius = css.borderTopLeftRadius;
-		container.style.borderBottomLeftRadius = css.borderBottomLeftRadius;
+			wrap.appendChild(el);
+			container.appendChild(wrap);
+		}
 
-		// 修改编辑器样式
-		editor.style.flexGrow = '1';
+		return { container, lineNumbers: el, lineWrap: wrap };
+	};
 
-		// 创建行号元素
-		lineNumbersEl = document.createElement('div');
-		lineNumbersEl.style.display = 'block';
-		// lineNumbersEl.style.width = '48px';
-		lineNumbersEl.style.textAlign = 'right';
-		lineNumbersEl.style.userSelect = 'none';
-		lineNumbersEl.style.backgroundColor = 'rgba(128, 128, 128, 0.15)';
-		lineNumbersEl.style.color = css.color;
-		lineNumbersEl.style.borderRight = '1px solid #ddd';
-		lineNumbersEl.style.fontFamily = css.fontFamily;
-		lineNumbersEl.style.fontSize = css.fontSize;
-		lineNumbersEl.style.lineHeight = css.lineHeight;
-		lineNumbersEl.style.paddingTop = css.paddingTop;
-		lineNumbersEl.style.paddingBottom = css.paddingBottom;
-		lineNumbersEl.style.paddingLeft = '0.5rem';
-		lineNumbersEl.style.paddingRight = '0.5rem';
+	/** 刷新状态，及修改编辑器主题时调用 */
+	const refresh = () => {
+		// 还原编辑器之前的状态
+		const container = document.getElementById(CONTAINER_ID);
+		if (!container) return;
 
-		lineNumbersEl.className = NAME_LINENUMBER;
-		lineNumbersEl.innerHTML = '<div>1</div>';
+		const css = getComputedStyle(container);
+		// 背景不还原，防止覆盖主题中的背景
+		// editor.style.background = cacheTheme.background;
+		editor.style.borderRadius = css.borderRadius;
+		editor.style.border = css.border;
+		editor.style.borderRadius = css.borderRadius;
+		editor.style.boxShadow = css.boxShadow;
+		editor.style.margin = css.margin;
+		editor.style.padding = padding;
 
-		// 替换掉原来的 editor，并将 editor 放入 container 里
-		editorParent!.insertBefore(container, editor);
-		container.appendChild(lineNumbersEl);
-		container.appendChild(editor);
+		// 清除缓存背景
+		background = '';
+		padding = '';
+
+		return container;
 	};
 
 	/** 更新行号 */
 	const update = (code: string) => {
-		init();
-		if (!lineNumbersEl) return;
+		const el = getElement();
+		if (!el) return;
 
-		const lines = code.split('\n');
+		const { container, lineNumbers, lineWrap } = el;
 
-		// 1. 创建一个看不见的 mirror 元素
-		const mirror = document.createElement('div');
-		const mirrorContent = document.createElement('div');
-		mirror.appendChild(mirrorContent);
+		const css = getComputedStyle(editor);
+		lineNumbers.style.height = css.height;
 
-		// 2. 复制关键样式
-		const style = window.getComputedStyle(editor);
-		mirror.style.fontFamily = style.fontFamily;
-		mirror.style.fontSize = style.fontSize;
-		mirror.style.lineHeight = style.lineHeight;
-		mirror.style.width = style.width;
-		mirror.style.padding = style.padding;
-		mirror.style.whiteSpace = style.whiteSpace;
-		mirror.style.overflowWrap = style.overflowWrap;
-		mirror.style.wordBreak = style.wordBreak;
+		// 背景改变，则需要重新调整样式效果
+		if (background !== css.backgroundColor) {
+			background = css.backgroundColor;
 
-		// 把它藏到屏幕外
-		mirror.style.position = 'absolute';
-		mirror.style.left = '-9999px';
+			padding = css.padding;
 
-		// 3. 把每一行代码用 div 包裹后放入 mirror
-		mirrorContent.innerHTML = lines.map((line) => `<div>${line || ' '}</div>`).join('');
+			container.style.background = css.background;
+			container.style.borderRadius = css.borderRadius;
+			container.style.border = css.border;
+			container.style.borderRadius = css.borderRadius;
+			container.style.boxShadow = css.boxShadow;
+			container.style.margin = css.margin;
 
-		// 4. 把 mirror 添加到 DOM 中，让浏览器计算它的高度
-		document.body.appendChild(mirror);
+			container.style.padding = padding;
+			container.style.paddingLeft = '0';
+			lineWrap.style.marginRight = css.paddingLeft;
 
-		// 5. 测量并收集每一行的高度
-		const lineHeights: number[] = [];
-		const children = Array.from(mirrorContent.children) as HTMLElement[];
-		children.forEach((child) => {
-			lineHeights.push(child.offsetHeight);
-		});
+			// editor.style.background = background;
+			editor.style.borderRadius = 'unset';
+			editor.style.border = 'none';
+			editor.style.borderRadius = 'none';
+			editor.style.boxShadow = 'none';
+			editor.style.margin = 'auto';
+			editor.style.padding = '0';
 
-		// 6. 测量完毕，销毁 mirror
-		document.body.removeChild(mirror);
+			lineNumbers.style.color = css.color;
+			lineNumbers.style.font = css.font;
+		}
 
-		// 7. 生成新的行号 HTML，并应用我们测量到的精确高度
+		const lines = code.replace(/\r\n/g, '\n').split('\n');
+		// 移除最后的空值
+		if (lines.length > 1 && lines[lines.length - 1] === '') {
+			lines.pop();
+		}
+		const lineHeights = Array(lines.length);
+
+		// 对于自动换行的代码需要特殊处理
+		if (cjp.options.wrap) {
+			// 1. 创建一个看不见的 mirror 元素
+			const mirror = document.createElement('div');
+
+			// 2. 复制关键样式
+			const style = window.getComputedStyle(editor);
+			mirror.style.fontFamily = style.fontFamily;
+			mirror.style.fontSize = style.fontSize;
+			mirror.style.lineHeight = style.lineHeight;
+			mirror.style.width = style.width;
+			mirror.style.padding = style.padding;
+			mirror.style.tabSize = style.tabSize;
+
+			mirror.style.overflowWrap = 'break-word';
+			mirror.style.wordBreak = 'break-all';
+			mirror.style.whiteSpace = 'pre-wrap';
+
+			// 把它藏到屏幕外
+			mirror.style.position = 'absolute';
+			mirror.style.left = '-9999px';
+
+			// 3. 把每一行代码用 div 包裹后放入 mirror
+			mirror.innerHTML = lines.map((line) => `<div>${line || ' '}</div>`).join('');
+
+			// 4. 把 mirror 添加到 DOM 中，让浏览器计算它的高度
+			document.body.appendChild(mirror);
+
+			// 5. 测量并收集每一行的高度
+			const children = Array.from(mirror.children) as HTMLElement[];
+			children.forEach((child, index) => {
+				lineHeights[index] = child.offsetHeight;
+			});
+
+			// 6. 测量完毕，销毁 mirror
+			document.body.removeChild(mirror);
+		}
+
+		// 生成新的行号 HTML
 		let lineNumbersContent = '';
-		for (let i = 0; i < lines.length; i++) {
-			// 如果高度为 0 (可能是空行)，给一个默认的行高
-			const height = lineHeights[i] || 20;
-			lineNumbersContent += `<div style="height: ${height}px"><div>${i + 1}</div></div>`;
+		for (let i = 0; i < lineHeights.length; i++) {
+			if (lineHeights[i]) {
+				lineNumbersContent += `<div style="height: ${lineHeights[i]}px">${i + 1}</div>`;
+			} else {
+				lineNumbersContent += `<div>${i + 1}</div>`;
+			}
 		}
 
 		// 更新行号
-		lineNumbersEl.innerHTML = lineNumbersContent;
+		lineNumbers.innerHTML = lineNumbersContent;
 	};
 
 	/** 销毁 */
 	const destroy = () => {
-		if (lineNumbersEl) {
-			// 如果开启了行号，就把 DOM 结构恢复回去
-			const container = editor.parentNode!;
-			const originalParent = container.parentNode!;
-			originalParent.insertBefore(editor, container);
-			originalParent.removeChild(container);
-		}
+		const container = refresh();
+		if (!container) return;
+
+		// // 如果开启了行号，就把 DOM 结构恢复回去
+		// const css = getComputedStyle(container);
+		// editor.style.background = cacheTheme.background;
+		// editor.style.borderRadius = cacheTheme.borderRadius;
+		// editor.style.border = cacheTheme.border;
+		// editor.style.borderRadius = cacheTheme.borderRadius;
+		// editor.style.boxShadow = cacheTheme.boxShadow;
+		// editor.style.margin = css.margin;
+
+		const originalParent = container.parentNode!;
+		originalParent.insertBefore(editor, container);
+		originalParent.removeChild(container);
+		container.remove();
+
+		background = '';
 	};
 
 	// 创建一个防抖版的行号更新函数，防止在快速拖拽时频繁触发
@@ -169,43 +262,41 @@ function creteaPlugin(cjp: CodeJarPro, config: LineNumbersOptions) {
 
 		// 添加滚动监控事件
 		if (name === 'scroll') {
-			if (config.show && lineNumbersEl) {
-				lineNumbersEl.scrollTop = editor.scrollTop;
+			if (config.show) {
+				const el = getElement();
+				if (!el || !el.lineNumbers) return;
+				el.lineNumbers.scrollTop = editor.scrollTop;
 			}
-			return;
+		}
+
+		if (name === 'refresh') {
+			// 检查是否来自主题修改
+			const css = getComputedStyle(editor);
+			if (css.backgroundColor !== background) {
+				refresh();
+			}
 		}
 	};
 
 	return {
 		name: 'LineNumbers',
 		onAction,
-		updateConfig: (opts: LineNumbersOptions) => {
+		updateConfig: (opts: PluginOptions) => {
 			if (!isObj(opts)) return;
 			config.show = !!opts.show;
+
+			if (config.show) {
+				cjp.refresh();
+			} else {
+				destroy();
+			}
 		},
 		destroy
-	} as IPlugin<LineNumbersOptions>;
+	};
 }
 
-/** 配置 */
-export type LineNumbersOptions = {
-	show: boolean;
-};
-
-export function LineNumbers(cjp: CodeJarPro, config: LineNumbersOptions) {
-	const { id = '' } = cjp;
-
-	/** 操作列表 */
-	const plugins = new Map<string, IPlugin<LineNumbersOptions>>();
-
-	/** 返回指定操作 */
-	if (plugins.has(id)) return plugins.get(id)!;
-
-	/** 创建操作 */
-	const plugin = creteaPlugin(cjp, config);
-	plugins.set(id, plugin);
-
-	return plugin;
-}
-
+export const LineNumbers = createPlugin(create);
 export default LineNumbers;
+
+/** 插件类型 */
+export type LineNumbersPlugin = ReturnType<typeof LineNumbers>;
