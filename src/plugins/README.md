@@ -124,10 +124,14 @@ const jsonValidate = cjp.addPlugin(JsonValidate, {
 
 #### Configuration Options
 
--   `config.enabled: boolean | (() => boolean)`: Controls whether the plugin is enabled. Can be a boolean or a function that returns a boolean. Default: `false`.
+-   `config.enabled: boolean | ((code: string) => boolean)`: Controls whether the plugin is enabled. Can be a boolean or a function that returns a boolean. Default: `false`.
+-   `config.ignoreEmpty?: boolean`: Ignore empty values. Default: `true`.
 -   `config.markerClass?: string`: The CSS class name to apply to error markers.
 -   `config.markerStyle?: string`: Inline styles to apply to error markers.
--   `config.onError?: (error: Error | false, pos?: { line?: number; column?: number; index: number }) => void`: Callback function when an error is found or cleared.
+-   `config.onError?: (error: Error | false, code?: string, pos?: { line?: number; column?: number; index: number }) => void`: Callback function when an error is found or cleared.
+    -   `error: Error | false`: The error object if an error is found, or `false` if the code is valid.
+    -   `code?: string`: The current code in the editor.
+    -   `pos?: { line?: number; column?: number; index: number }`: The position of the error in the code.
 
 ### API
 

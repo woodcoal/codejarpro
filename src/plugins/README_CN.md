@@ -124,10 +124,14 @@ const jsonValidate = cjp.addPlugin(JsonValidate, {
 
 #### 配置选项
 
--   `config.enabled: boolean | (() => boolean)`: 控制插件是否启用。可以是布尔值或返回布尔值的函数。默认：`false`。
+-   `config.enabled: boolean | ((code: string) => boolean)`: 控制插件是否启用。可以是布尔值或返回布尔值的函数。默认：`false`。
+-   `config.ignoreEmpty?: boolean`: 忽略空值。默认：`true`。
 -   `config.markerClass?: string`: 应用于错误标记的 CSS 类名。
 -   `config.markerStyle?: string`: 应用于错误标记的内联样式。
--   `config.onError?: (error: Error | false, pos?: { line?: number; column?: number; index: number }) => void`: 发现或清除错误时的回调函数。
+-   `config.onError?: (error: Error | false, code?: string, pos?: { line?: number; column?: number; index: number }) => void`: 发现或清除错误时的回调函数。
+    -   `error: Error | false`: 错误对象如果发现错误，否则为 `false`。
+    -   `code?: string`: 当前编辑器中的代码。
+    -   `pos?: { line?: number; column?: number; index: number }`: 错误位置信息。
 
 ### API
 

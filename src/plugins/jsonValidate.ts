@@ -11,7 +11,10 @@ import { insertMarkerNode, rowColToIndex } from './insertMark';
 /** 配置 */
 export type PluginOptions = {
 	/** 是否启用(默认：false) */
-	enabled: boolean | (() => boolean);
+	enabled: boolean | ((code: string) => boolean);
+
+	/** 是否忽略空值 */
+	ignoreEmpty?: boolean;
 
 	/** 错误提示类名 */
 	markerClass?: string;
@@ -22,6 +25,7 @@ export type PluginOptions = {
 	/** 存在错误回调操作 */
 	onError?: (
 		error: Error | false,
+		code: string,
 		pos?: { line?: number; column?: number; index: number }
 	) => void;
 };
@@ -42,19 +46,23 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 
 	config = {
 		enabled: false,
+		ignoreEmpty: true,
 		...config
 	};
 
 	const validate = (code: string) => {
+		// 忽略空值
+		if (config.ignoreEmpty && !code.trim()) return;
+
 		// 检查是否允许操作
-		const enabled = isFn(config.enabled) ? config.enabled() : config.enabled;
+		const enabled = isFn(config.enabled) ? config.enabled(code) : config.enabled;
 		if (!enabled) return;
 
 		try {
 			JSON.parse(code);
 
 			// 存在错误回调操作
-			isFn(config.onError) && config.onError(false);
+			isFn(config.onError) && config.onError(false, code);
 		} catch (e: any) {
 			// 校验失败，找出错误位置
 			const err = parseErrorPosition(e.message, code);
@@ -79,7 +87,7 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 
 			// 存在错误回调操作
 			isFn(config.onError) &&
-				config.onError(e, {
+				config.onError(e, code, {
 					...err,
 					index: index
 				});
@@ -101,6 +109,7 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 			if (!isObj(opts)) return;
 			(isFn(opts.enabled) || opts.enabled === true || opts.enabled === false) &&
 				(config.enabled = opts.enabled);
+			opts.ignoreEmpty !== undefined && (config.ignoreEmpty = !!opts.ignoreEmpty);
 			opts.markerClass && (config.markerClass = opts.markerClass);
 			opts.markerStyle && (config.markerStyle = opts.markerStyle);
 		},
