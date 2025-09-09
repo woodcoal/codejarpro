@@ -7,6 +7,7 @@ Copyright © 木炭 (WOODCOAL) All rights reserved
 
 <template>
 	<div class="dl-code" :class="[THEME && `theme-${THEME}`]">
+		<span v-if="ErrorMessage">{{ ErrorMessage }}</span>
 		<pre ref="xEditor" class="dl-code-wrapper"></pre>
 	</div>
 </template>
@@ -15,8 +16,10 @@ Copyright © 木炭 (WOODCOAL) All rights reserved
 import type { ICode as IProps, ThemeEnums } from './types';
 import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue';
 
-import { CodeJarPro, type CodeJarProInstance } from 'codejarpro';
-import { LineNumbers, type LineNumbersPlugin } from 'codejarpro/plugins';
+// import { CodeJarPro, type CodeJarProInstance } from 'codejarpro';
+// import { LineNumbers, InsertMark, type LineNumbersPlugin, type InsertMarkPlugin } from 'codejarpro/plugins';
+import { CodeJarPro, type CodeJarProInstance } from '../../../src';
+import { LineNumbers, InsertMark, type LineNumbersPlugin, type InsertMarkPlugin } from '../../../src/plugins';
 
 import Prism from 'prismjs';
 
@@ -35,6 +38,7 @@ import 'prismjs/components/prism-vbnet'; // vb.net
 import 'prismjs/components/prism-csharp'; // c#
 import 'prismjs/components/prism-sql'; // sql
 import 'prismjs/components/prism-python'; // python
+import { isFn, isObj } from 'codejarpro';
 
 // 行号
 // import 'prismjs/plugins/line-numbers/prism-line-numbers';
@@ -59,6 +63,7 @@ const emits = defineEmits<{
 /** 代码编辑实例 */
 let CJP: CodeJarProInstance;
 let CJP_LINE_NUMBERS: LineNumbersPlugin | undefined;
+let CJP_MARK: InsertMarkPlugin | undefined;
 
 /* ******** ******** 基础状态 ******** ******** */
 
@@ -79,6 +84,9 @@ const READONLY = ref(props.readonly);
 
 /** 行号 */
 const LINE_NUMBERS = ref(props.lineNumbers);
+
+/** 错误提示 */
+const ErrorMessage = ref('');
 
 /** 值监控 */
 watch([() => props.value, () => props.modelValue], (n, o) => {
@@ -198,6 +206,9 @@ const init = () => {
 		show: LINE_NUMBERS.value
 	});
 
+	// 标记插件
+	CJP_MARK = CJP.addPlugin(InsertMark);
+
 	// 初始化完成
 	emits('init', CODE.value, CJP, xEditor.value);
 
@@ -208,6 +219,32 @@ const init = () => {
 	CJP.onUpdate((code: string) => {
 		// 代码改变则提交一次更新
 		if (code !== CODE.value) {
+			ErrorMessage.value = '';
+
+			// 校验
+			if (isFn(props.onValidate)) {
+				const res = props.onValidate(code, LANGUAGE.value);
+
+				console.log(res);
+				// 定位
+				if (isObj(res)) {
+					ErrorMessage.value = res.message || '当前代码存在异常，请检查。';
+
+					CJP_MARK?.addMarker({
+						...res,
+						markerId: 'error',
+						markerStyle:
+							'background-color: rgba(255, 215, 0, 0.3); padding: 0px 5px; border-radius: 2px; text-decoration: underline 2px wavy red; text-underline-offset: 3px;background-color: rgba(255, 215, 0, 0.3); padding: 0px 5px; border-radius: 2px; text-decoration: underline 2px wavy red; text-underline-offset: 3px;'
+					});
+					return;
+				}
+
+				if (res !== true) {
+					ErrorMessage.value = res || '当前代码存在异常，请检查。';
+					return;
+				}
+			}
+
 			CODE.value = code;
 
 			emits('change', code, CJP);

@@ -4,7 +4,8 @@
  * Copyright © 木炭 (WOODCOAL) All rights reserved
  */
 
-import type { CodeJarProInstance, Options } from 'codejarpro';
+// import type { CodeJarProInstance, Options } from 'codejarpro';
+import type { CodeJarProInstance, Options } from '../../../src';
 
 /** 主题枚举 */
 export type ThemeEnums = 'default' | 'dark' | 'light' | 'auto' | 'custom';
@@ -63,4 +64,15 @@ export interface ICode {
 	 * @param target 代码容器
 	 */
 	onAfterFormat?: (code: string, target: HTMLElement) => void;
+
+	/**
+	 * 代码校验
+	 * @param code 代码内容
+	 * @param language 代码语言
+	 * @returns 校验结果。 true 校验通过可以进行后续操作；false 校验失败，不允许后续代码提交；文本为错误提示内容；位置则为错误行列用于标记异常
+	 */
+	onValidate?: (
+		code: string,
+		language: string
+	) => { row: number; col: number; message: string } | { index: number; message: string } | string | boolean;
 }

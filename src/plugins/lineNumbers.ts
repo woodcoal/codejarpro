@@ -59,6 +59,7 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 			container.id = CONTAINER_ID;
 			container.style.display = 'flex';
 			container.style.flexDirection = 'row-reverse';
+			container.style.alignItems = 'flex-start';
 			container.style.setProperty('--cjp-ln-space', '0.5rem');
 			container.style.setProperty('--cjp-ln-border', '1px solid #ddd');
 			container.style.setProperty('--cjp-ln-opacity', '0.5');
@@ -131,10 +132,9 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 
 		const { container, lineNumbers, lineWrap } = el;
 
-		const css = getComputedStyle(editor);
-		lineNumbers.style.height = css.height;
-
 		// 背景改变，则需要重新调整样式效果
+
+		const css = getComputedStyle(editor);
 		if (background !== css.backgroundColor) {
 			background = css.backgroundColor;
 
@@ -163,6 +163,7 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 			lineNumbers.style.font = css.font;
 		}
 
+		// 行号处理
 		const lines = code.replace(/\r\n/g, '\n').split('\n');
 		// 移除最后的空值
 		if (lines.length > 1 && lines[lines.length - 1] === '') {
@@ -254,6 +255,9 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 
 		// // 更新行号
 		// lineNumbers.innerHTML = lineNumbersContent;
+
+		// 重新调整行高度
+		lineNumbers.style.height = css.height;
 	};
 
 	/** 销毁 */

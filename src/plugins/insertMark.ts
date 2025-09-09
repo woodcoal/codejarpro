@@ -123,11 +123,14 @@ function create(cjp: CodeJarProInstance) {
 		/** 标记的唯一ID */
 		markerId: string;
 
-		/** 行号 (从 1 开始) */
-		line: number;
+		/** 字符位置，优先级高于 `line` `column`；两者只需设置一个 */
+		index?: number;
 
-		/** 列号 (从 1 开始) */
-		column: number;
+		/** 行号 (从 1 开始) 优先级低于 `index`；两者只需设置一个 */
+		line?: number;
+
+		/** 列号 (从 1 开始) 优先级低于 `index`；两者只需设置一个 */
+		column?: number;
 
 		/** 标记信息 */
 		message?: string;
@@ -143,7 +146,7 @@ function create(cjp: CodeJarProInstance) {
 		if (markers.has(markerId)) removeMarker(markerId);
 
 		const code = toString();
-		const startIndex = rowColToIndex(code, line, column);
+		const startIndex = info.index || rowColToIndex(code, line, column);
 		const pos = save();
 		const element = insertMarkerNode({
 			markerId,

@@ -22,11 +22,14 @@ export type PluginOptions = {
 	/** 错误提示样式 */
 	markerStyle?: string;
 
-	/** 存在错误回调操作 */
-	onError?: (
+	/** 验证之前操作,返回 false 则不继续验证 */
+	onBeforeValidate?: (code: string, options: PluginOptions) => boolean | void;
+
+	/** 验证回调操作 */
+	onValidate?: (
 		error: Error | false,
 		code: string,
-		pos?: { line?: number; column?: number; index: number }
+		pos?: { line?: number; column?: number; index?: number }
 	) => void;
 };
 
@@ -51,6 +54,10 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 	};
 
 	const validate = (code: string) => {
+		// 明确验证前返回 false 不再后续操作
+		if (isFn(config.onBeforeValidate) && config.onBeforeValidate(code, config) === false)
+			return;
+
 		// 忽略空值
 		if (config.ignoreEmpty && !code.trim()) return;
 
@@ -62,7 +69,7 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 			JSON.parse(code);
 
 			// 存在错误回调操作
-			isFn(config.onError) && config.onError(false, code);
+			isFn(config.onValidate) && config.onValidate(false, code);
 		} catch (e: any) {
 			// 校验失败，找出错误位置
 			const err = parseErrorPosition(e.message, code);
@@ -86,8 +93,8 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 			cjp.restore(pos);
 
 			// 存在错误回调操作
-			isFn(config.onError) &&
-				config.onError(e, code, {
+			isFn(config.onValidate) &&
+				config.onValidate(e, code, {
 					...err,
 					index: index
 				});

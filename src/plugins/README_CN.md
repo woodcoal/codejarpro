@@ -60,8 +60,9 @@ const insertMark = cjp.addPlugin(InsertMark);
 
     -   `info: object`: 标记的详细信息，包含以下属性：
         -   `markerId: string`: 标记的唯一 ID。
-        -   `line: number`: 行号 (从 1 开始)。
-        -   `column: number`: 列号 (从 1 开始)。
+        -   `index?: number`: 标记位置，优先级高于 `line` `column`；两者只需设置一个。
+        -   `line?: number`: 行号 (从 1 开始)；优先级低于 `index`；两者只需设置一个。
+        -   `column?: number`: 列号 (从 1 开始)；优先级低于 `index`；两者只需设置一个。
         -   `message?: string`: 鼠标悬停在标记上时显示的提示信息。
         -   `markerClass?: string`: 应用于标记 `<span>` 元素的 CSS 类名。
         -   `markerStyle?: string`: 应用于标记的内联样式。
@@ -128,7 +129,8 @@ const jsonValidate = cjp.addPlugin(JsonValidate, {
 -   `config.ignoreEmpty?: boolean`: 忽略空值。默认：`true`。
 -   `config.markerClass?: string`: 应用于错误标记的 CSS 类名。
 -   `config.markerStyle?: string`: 应用于错误标记的内联样式。
--   `config.onError?: (error: Error | false, code?: string, pos?: { line?: number; column?: number; index: number }) => void`: 发现或清除错误时的回调函数。
+-   `config.onBeforeValidate?: (code: string, options: PluginOptions) => boolean | void`: 验证前的回调函数，返回 `false` 将中止后续验证。
+-   `config.onValidate?: (error: Error | false, code?: string, pos?: { line?: number; column?: number; index: number }) => void`: 发现或清除错误时的回调函数。
     -   `error: Error | false`: 错误对象如果发现错误，否则为 `false`。
     -   `code?: string`: 当前编辑器中的代码。
     -   `pos?: { line?: number; column?: number; index: number }`: 错误位置信息。

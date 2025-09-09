@@ -69,6 +69,7 @@ Copyright © 木炭 (WOODCOAL) All rights reserved
 			@init="onInit"
 			:readonly="false"
 			:lineNumbers="true"
+			:onValidate="onValidate"
 			language="json"
 			ref="xCode"
 		/>
@@ -112,6 +113,21 @@ const onInit = (_: string, CJP: CodeJarProInstance) => {
 
 const onChange = (code: string) => {
 	json.value = code;
+};
+
+const onValidate = (code: string) => {
+	const res = {
+		index: code.indexOf('张三'),
+		row: 0,
+		col: 0,
+		message: '当前内容不能包含【张三】两个字'
+	};
+
+	if (res.index !== -1) {
+		return res;
+	}
+
+	return true;
 };
 </script>
 <style lang="less">

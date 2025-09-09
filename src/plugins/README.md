@@ -60,8 +60,9 @@ The plugin instance `insertMark` exposes the following core methods:
 
     -   `info: object`: An object containing the marker's details:
         -   `markerId: string`: A unique ID for the marker.
-        -   `line: number`: The line number (starting from 1).
-        -   `column: number`: The column number (starting from 1).
+        -   `index?: number`: The character position (starting from 0); priority higher than `line` `column`.
+        -   `line?: number`: The line number (starting from 1); priority lower than `index`.
+        -   `column?: number`: The column number (starting from 1); priority lower than `index`.
         -   `message?: string`: A tooltip message to display when hovering over the marker.
         -   `markerClass?: string`: The CSS class name to apply to the marker's `<span>` element.
         -   `markerStyle?: string`: Inline styles to apply to the marker.
@@ -128,7 +129,8 @@ const jsonValidate = cjp.addPlugin(JsonValidate, {
 -   `config.ignoreEmpty?: boolean`: Ignore empty values. Default: `true`.
 -   `config.markerClass?: string`: The CSS class name to apply to error markers.
 -   `config.markerStyle?: string`: Inline styles to apply to error markers.
--   `config.onError?: (error: Error | false, code?: string, pos?: { line?: number; column?: number; index: number }) => void`: Callback function when an error is found or cleared.
+-   `config.onBeforeValidate?: (code: string, options: PluginOptions) => boolean | void`: Callback function before validation; returning `false` will abort subsequent validation.
+-   `config.onValidate?: (error: Error | false, code?: string, pos?: { line?: number; column?: number; index: number }) => void`: Callback function when an error is found or cleared.
     -   `error: Error | false`: The error object if an error is found, or `false` if the code is valid.
     -   `code?: string`: The current code in the editor.
     -   `pos?: { line?: number; column?: number; index: number }`: The position of the error in the code.
