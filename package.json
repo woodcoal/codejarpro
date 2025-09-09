@@ -1,7 +1,7 @@
 {
 	"name": "codejarpro",
 	"description": "A powerful, extensible code editor for the browser. Based on CodeJar with plugins, line numbers and more.",
-	"version": "1.25.908",
+	"version": "1.25.909",
 	"license": "MIT",
 	"repository": "https://github.com/woodcoal/codejarpro",
 	"author": "木炭 <i@wodocoal.cn>; Anton Medvedev <anton@medv.io>",

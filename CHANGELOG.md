@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.25.909](https://github.com/woodcoal/codejarpro/compare/v1.25.908...v1.25.909) (2025-09-09)
+
+
+### Bug Fixes
+
+* **行号插件:** 优化行号样式配置 ([78752b3](https://github.com/woodcoal/codejarpro/commit/78752b38023a6a1f68e6b2a7059e07bfa7e17495))
+
+
+### Features
+
+* **jsonValidate:** 增强插件配置选项和错误处理 ([815defe](https://github.com/woodcoal/codejarpro/commit/815defee005d96095869ac04553a21a645c255e3))
+* **validation:** 添加代码校验功能并增强标记插件 ([04eb946](https://github.com/woodcoal/codejarpro/commit/04eb94673fe8a0e713e714dab03628ea15c4d661))
+
 ## 1.25.908 (2025-09-08)
 
 
