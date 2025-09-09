@@ -59,6 +59,9 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 			container.id = CONTAINER_ID;
 			container.style.display = 'flex';
 			container.style.flexDirection = 'row-reverse';
+			container.style.setProperty('--cjp-ln-space', '0.5rem');
+			container.style.setProperty('--cjp-ln-border', '1px solid #ddd');
+			container.style.setProperty('--cjp-ln-opacity', '0.5');
 
 			// 修改编辑器样式
 			editor.style.flexGrow = '1';
@@ -84,11 +87,11 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 			// 创建行号元素
 			el = document.createElement('div');
 			el.className = LINENUMBER_NAME;
-			el.style.paddingLeft = '0.5rem';
-			el.style.paddingRight = '0.5rem';
+			el.style.paddingLeft = 'var(--cjp-ln-space)';
+			el.style.paddingRight = 'var(--cjp-ln-space)';
 			el.style.overflow = 'hidden';
-			el.style.borderRight = '1px solid #ddd';
-			el.style.opacity = '0.5';
+			el.style.borderRight = 'var(--cjp-ln-border)';
+			el.style.opacity = 'var(--cjp-ln-opacity)';
 			el.innerHTML = '<div>1</div>';
 
 			wrap.appendChild(el);
@@ -234,6 +237,8 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 			const height = lineHeights[i];
 			if (height && lineElement.style.height !== `${height}px`) {
 				lineElement.style.height = `${height}px`;
+			} else {
+				lineElement.style.removeProperty('height');
 			}
 		}
 
