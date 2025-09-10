@@ -178,10 +178,18 @@ const editorCode = (e?: HTMLElement, code?: string) => {
 	// 格式化函数
 	props.onBeforeFormat && typeof props.onBeforeFormat === 'function' && (code = props.onBeforeFormat(code) || code);
 
-	e.innerHTML = `<code class="language-${LANGUAGE.value}">${code}</code>`;
+	// 格式化
+	const codeEl = document.createElement('code');
+	codeEl.className = `language-${LANGUAGE.value}`;
+	codeEl.textContent = code;
+	// e.innerHTML = `<code class="language-${LANGUAGE.value}">${code}</code>`;
+
+	// 清理旧内容
+	e.innerHTML = '';
+	e.appendChild(codeEl);
 
 	// 处理 code 代码并高亮
-	Prism.highlightElement(e.firstElementChild as HTMLElement);
+	Prism.highlightElement(codeEl);
 
 	// 格式化之后操作
 	props.onAfterFormat && typeof props.onAfterFormat === 'function' && props.onAfterFormat(code, e);

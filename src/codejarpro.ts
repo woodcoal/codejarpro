@@ -296,8 +296,8 @@ export default function CodeJarPro(
 	checkReadonly();
 
 	/** 更新自动换行 */
-	const updateWrap = (el: HTMLElement) => {
-		if (!el) return;
+	const updateWrap = (el: Element) => {
+		if (!el || !(el instanceof HTMLElement)) return;
 
 		el.style.overflowWrap = options.wrap ? 'break-word' : 'normal';
 		el.style.whiteSpace = options.wrap ? 'pre-wrap' : 'pre';
@@ -310,9 +310,12 @@ export default function CodeJarPro(
 		highlight(editor, pos);
 
 		/** 更新自动换行 */
-		editor.childNodes.forEach((el) => {
-			el.ELEMENT_NODE && updateWrap(el as HTMLElement);
-		});
+		if (editor.children.length > 0) {
+			for (let i = 0; i < editor.children.length; i++) {
+				updateWrap(editor.children[i]);
+			}
+		}
+
 		updateWrap(editor);
 
 		hookPlugin('highlight');
