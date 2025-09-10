@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.910](https://github.com/woodcoal/codejarpro/compare/v1.25.909...v1.25.910) (2025-09-10)
+
+
+### Bug Fixes
+
+* 修复代码高亮和自动换行处理的问题 ([e1c2b8e](https://github.com/woodcoal/codejarpro/commit/e1c2b8ec175be218f082637f8dbaccaa0613af76))
+
 ## [1.25.909](https://github.com/woodcoal/codejarpro/compare/v1.25.908...v1.25.909) (2025-09-09)
 
 
