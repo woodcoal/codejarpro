@@ -89,20 +89,33 @@ export function parseErrorPosition(message: string, content: string) {
  * @param options.createFn 插件生成回调函数
  * @returns
  */
-export function createPlugin<T extends object = any, P extends IPlugin<T> = IPlugin<T>>(
-	createFn: (cjp: CodeJarProInstance, config?: T) => P
-) {
+export function createPlugin<
+	T extends object = any,
+	P extends Omit<IPlugin<T>, 'enabled'> & { enabled?: boolean | (() => boolean) } = IPlugin<T> & {
+		enabled?: boolean | (() => boolean);
+	}
+>(createFn: (cjp: CodeJarProInstance, config?: T) => P) {
+	type R = P & {
+		enabled: boolean | (() => boolean);
+	};
+
 	return (cjp: CodeJarProInstance, config?: T) => {
 		const { id = '' } = cjp;
 
 		/** 操作列表 */
-		const plugins = new Map<string, P>();
+		const plugins = new Map<string, R>();
 
 		/** 返回指定操作 */
 		if (plugins.has(id)) return plugins.get(id)!;
 
 		/** 创建操作 */
-		const plugin = createFn(cjp, config);
+		const data = createFn(cjp, config);
+		const plugin: R = {
+			...data,
+			enabled: isFn(data.enabled) || data.enabled === false ? data.enabled : true
+		};
+
+		/** 检查是否启用 */
 		plugins.set(id, plugin);
 
 		return plugin;

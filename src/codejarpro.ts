@@ -241,14 +241,19 @@ export default function CodeJarPro(
 		plugins.forEach((plugin, name) => {
 			debug(`"${name}" plugin execute "${hookName}" action`);
 
-			if (
-				plugin.onAction({
-					name: hookName,
-					code: toString(),
-					event
-				}) === true
-			) {
-				result = true;
+			const enabled = isFn(plugin.enabled) ? plugin.enabled() : plugin.enabled;
+			if (enabled) {
+				if (
+					plugin.onAction({
+						name: hookName,
+						code: toString(),
+						event
+					}) === true
+				) {
+					result = true;
+				}
+			} else {
+				debug(`"${name}" plugin disabled`);
 			}
 		});
 

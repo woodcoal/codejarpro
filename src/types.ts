@@ -149,6 +149,13 @@ export interface IPlugin<T extends object = any> {
 	name: string;
 
 	/**
+	 * 插件是否启用，禁用则不再自动 hook Action
+	 * 默认启用
+	 * @returns 插件是否启用
+	 */
+	enabled: boolean | (() => boolean);
+
+	/**
 	 * 操作事件
 	 * @param name 事件名称
 	 * @param code 编辑器当前代码

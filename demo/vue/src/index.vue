@@ -176,7 +176,7 @@ const editorCode = (e?: HTMLElement, code?: string) => {
 	code = code || e.textContent || '';
 
 	// 格式化函数
-	props.onBeforeFormat && typeof props.onBeforeFormat === 'function' && (code = props.onBeforeFormat(code) || code);
+	props.onBeforeFormat && isFn(props.onBeforeFormat) && (code = props.onBeforeFormat(code) || code);
 
 	// 格式化
 	const codeEl = document.createElement('code');
@@ -192,7 +192,7 @@ const editorCode = (e?: HTMLElement, code?: string) => {
 	Prism.highlightElement(codeEl);
 
 	// 格式化之后操作
-	props.onAfterFormat && typeof props.onAfterFormat === 'function' && props.onAfterFormat(code, e);
+	props.onAfterFormat && isFn(props.onAfterFormat) && props.onAfterFormat(code, e);
 };
 
 /** 编辑器 */

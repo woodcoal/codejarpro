@@ -155,6 +155,7 @@ import { WordCounter } from 'codejarpro/plugins';
 const counterElement = document.getElementById('counter-display');
 
 const wordCounter = cjp.addPlugin(WordCounter, {
+	show: true,
 	target: counterElement,
 	format: (info) => `Chars: ${info.chars} | Words: ${info.words} | Pos: ${info.row}:${info.col}`
 });
@@ -162,6 +163,7 @@ const wordCounter = cjp.addPlugin(WordCounter, {
 
 #### Configuration Options
 
+-   `config.show?: boolean | ((code: string) => boolean)`: Controls whether the plugin is enabled. Can be a boolean or a function that returns a boolean. Default: `true`.
 -   `config.target?: HTMLElement`: The HTML element to display the counting information. If not provided, a `div` will be created automatically.
 -   `config.format?: (info) => string`: A custom function to format the counting information.
     -   `info.words: number`: Number of words.
@@ -191,6 +193,8 @@ const position = getLineColumn(text, 7); // { line: 2, column: 2 }
 
 All plugins share the following common method:
 
+-   **`plugin.enabled`**: Enables the plugin.
+-   **`plugin.updateConfig(config)`**: Dynamically updates the plugin configuration.
 -   **`plugin.destroy()`**: Destroys the plugin instance, cleans up resources, and removes all related DOM elements.
 
 ```javascript

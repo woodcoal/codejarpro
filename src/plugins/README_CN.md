@@ -155,6 +155,7 @@ import { WordCounter } from 'codejarpro/plugins';
 const counterElement = document.getElementById('counter-display');
 
 const wordCounter = cjp.addPlugin(WordCounter, {
+	show: true,
 	target: counterElement,
 	format: (info) => `字符: ${info.chars} | 单词: ${info.words} | 位置: ${info.row}:${info.col}`
 });
@@ -162,6 +163,7 @@ const wordCounter = cjp.addPlugin(WordCounter, {
 
 #### 配置选项
 
+-   `config.show?: boolean | ((code: string) => boolean)`: 控制插件是否启用。可以是布尔值或返回布尔值的函数。默认：`true`。
 -   `config.target?: HTMLElement`: 显示统计信息的 HTML 元素。如果未提供，插件将自动创建一个 `div`。
 -   `config.format?: (info) => string`: 自定义统计信息的格式化函数。
     -   `info.words: number`: 单词数量。
@@ -191,6 +193,8 @@ const position = getLineColumn(text, 7); // { line: 2, column: 2 }
 
 所有插件都共享以下通用方法：
 
+-   **`plugin.enabled`**: 启用插件。
+-   **`plugin.updateConfig(config)`**: 动态更新插件配置。
 -   **`plugin.destroy()`**: 销毁插件实例，清理资源并移除所有相关的 DOM 元素。
 
 ```javascript

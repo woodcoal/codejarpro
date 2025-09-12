@@ -32,6 +32,9 @@ export function getLineColumn(source: string, index: number) {
 
 /** 配置 */
 export type PluginOptions = {
+	/** 是否显示 */
+	show?: boolean | ((code: string) => boolean);
+
 	/** 统计信息输出的组件 */
 	target?: HTMLElement;
 
@@ -57,7 +60,10 @@ export type PluginOptions = {
  * @param show 是否显示行号
  */
 function create(cjp: CodeJarProInstance, config?: PluginOptions) {
-	config ??= {};
+	config = {
+		show: true,
+		...config
+	};
 
 	const { editor, save } = cjp;
 	let { target } = config || {};
@@ -67,6 +73,12 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 	}
 
 	const math = debounce((code: string) => {
+		const show = isFn(config.show) ? config.show(cjp.toString()) : config.show;
+		if (!show) {
+			target.textContent = '';
+			return;
+		}
+
 		// 仅在更新前执行
 		const cursor = save();
 		const pos = getLineColumn(code, cursor.start);
@@ -88,6 +100,9 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 		target.textContent = format(info);
 	}, cjp.options.debounce.update || 150);
 
+	// 安装时尝试执行一次
+	math(cjp.toString());
+
 	/** 返回插件 */
 	return {
 		name: 'WordCounter',
@@ -98,6 +113,8 @@ function create(cjp: CodeJarProInstance, config?: PluginOptions) {
 			if (!isObj(opts)) return;
 			isObj(opts.target) && (config.target = opts.target);
 			isFn(opts.format) && (config.format = opts.format);
+			(isFn(opts.show) || opts.show === false || opts.show === true) &&
+				(config.show = opts.show);
 		}
 	};
 }
