@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.911](https://github.com/woodcoal/codejarpro/compare/v1.25.910...v1.25.911) (2025-09-12)
+
+
+### Features
+
+* **plugin:** 为插件添加启用/禁用功能 ([f2bb540](https://github.com/woodcoal/codejarpro/commit/f2bb540828eae30bdfc5ceebabe00a36f8b77e25))
+
 ## [1.25.910](https://github.com/woodcoal/codejarpro/compare/v1.25.909...v1.25.910) (2025-09-10)
 
 
